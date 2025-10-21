@@ -10,6 +10,17 @@ Za rješavanje tih problema razvijen je projekt Quantum Hotel. Ovaj sustav omogu
 Osim toga, sustav podržava integraciju s vanjskim uslugama kao što su Google Maps za preciznu lokaciju hotela i naprednu statistiku za bolje planiranje i donošenje poslovnih odluka. Kroz jednostavno sučelje i automatizirane funkcionalnosti, Quantum Hotel poboljšava operativnu efikasnost i omogućuje bolju konkurentnost na tržištu.
 
 # Funkcijski zahtjevi
+Aplikacija Quantum Hotel imat će početnu stranicu koja će korisnicima omogućiti jednostavan pristup prijavi i pregledu hotelske ponude.
+Prijava će biti omogućena isključivo putem Google računa korištenjem OAuth2 autentifikacije.
+
+Korisnici će, ovisno o svojoj ulozi, imati različite mogućnosti unutar sustava. Gost će moći pregledavati dostupne smještajne jedinice, birati željeni termin i broj osoba te izvršiti rezervaciju. Uz to, moći će odabrati dodatne hotelske usluge poput doručka, parkiranja ili wellness sadržaja. Sustav će automatski provjeravati dostupnost soba i sprječavati preklapanje rezervacija.
+
+Na stranici će biti integrirana Google Maps usluga koja će omogućiti prikaz lokacije hotela i obližnjih sadržaja. Korisnicima će biti dostupni članci o dodatnim aktivnostima i ponudi hotela, a sve informacije bit će pregledne i jednostavne za korištenje.
+
+Djelatnici će imati mogućnost unosa i ažuriranja podataka o sobama, kategorijama i dodatnim uslugama, kao i pristup pregledu i potvrdi rezervacija. Administrator će imati sve ovlasti nad sustavom, uključujući upravljanje korisnicima i generiranje statističkih podataka o poslovanju.
+Sustav će omogućiti preuzimanje tih podataka u formatima PDF, XML i XLSX.
+
+Svi podaci o korisnicima, rezervacijama i uslugama bit će pohranjeni u bazu podataka, a sustav će biti siguran, jednostavan za korištenje i uvijek dostupan.
 
 # Tehnologije
 #Instalacija
