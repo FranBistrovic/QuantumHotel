@@ -1,5 +1,7 @@
-package com.quantumhotel.users;
+package com.quantumhotel.services;
 
+import com.quantumhotel.users.Role;
+import com.quantumhotel.users.User;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
@@ -8,6 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.quantumhotel.repository.UserRepository;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 @Configuration
 @EnableWebSecurity
@@ -20,14 +30,29 @@ public class CustomOidcUserService extends OidcUserService {
     public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
         OidcUser oidcUser = super.loadUser(userRequest);
 
-        // Extract user details from Google OAuth2 response
-        String providerId = oidcUser.getAttribute("sub"); // Google's unique ID
+        // Extract user details
+        String providerId = oidcUser.getAttribute("sub");
         String email = oidcUser.getAttribute("email");
         String firstName = oidcUser.getAttribute("given_name");
         String lastName = oidcUser.getAttribute("family_name");
         String imageUrl = oidcUser.getAttribute("picture");
 
-        // Find or create user
+        String fileName = providerId + ".jpg";
+        Path imagePath = Paths.get("uploads/profile_pics/" + fileName);
+
+        try {
+            Files.createDirectories(imagePath.getParent());
+
+            try (InputStream in = new URL(imageUrl).openStream()) {
+                Files.copy(in, imagePath, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+        } catch (IOException e) {
+            System.err.println("Failed to download Google profile image for " + email + ": " + e.getMessage());
+        }
+
+        String localImageUrl = "/uploads/profile_pics/" + fileName;
+
         User user = userRepository.findByProviderId(providerId)
                 .orElseGet(() -> {
                     User newUser = new User();
@@ -35,16 +60,16 @@ public class CustomOidcUserService extends OidcUserService {
                     newUser.setEmail(email);
                     newUser.setFirstName(firstName);
                     newUser.setLastName(lastName);
-                    newUser.setImageUrl(imageUrl);
-                    newUser.setRole(Role.GUEST); // Default role
+                    newUser.setImageUrl(localImageUrl);
+                    newUser.setRole(Role.USER);
                     return userRepository.save(newUser);
                 });
 
-        // Update existing user info (in case they changed their name/picture)
+        // Update info if needed
         user.setEmail(email);
         user.setFirstName(firstName);
         user.setLastName(lastName);
-        user.setImageUrl(imageUrl);
+        user.setImageUrl(localImageUrl);
         userRepository.save(user);
 
         return oidcUser;

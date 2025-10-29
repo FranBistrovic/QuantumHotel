@@ -1,75 +1,56 @@
 package com.quantumhotel.users;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "users")  // Add this line
+@Table(
+        name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_users_email", columnNames = "email"),
+                @UniqueConstraint(name = "uk_users_username", columnNames = "username"),
+                @UniqueConstraint(name = "uk_users_provider_id", columnNames = "provider_id")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
 public class User extends com.quantumhotel.entity.AbstractEntity {
+    @Column(name = "email", length = 255)
     private String email;
+
+    @Column(name = "username", length = 64)
+    private String username;
+
+    @JsonIgnore
+    @Column(name = "password_hash", length = 100)
+    private String passwordHash;
+
     private String firstName;
     private String lastName;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "gender", length = 16)
+    private Gender gender;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Role role;
 
+    @Column(name = "provider_id", length = 128)
     private String providerId;
 
     private String imageUrl;
 
-    public String getEmail() {
-        return email;
-    }
+    @Column(nullable = false)
+    private boolean enabled = true;
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    @Column(nullable = false)
+    private boolean accountNonLocked = true;
 
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public String getProviderId() {
-        return providerId;
-    }
-
-    public void setProviderId(String providerId) {
-        this.providerId = providerId;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
+    @Column(nullable = false)
+    private boolean requirePasswordChange = false;
 }

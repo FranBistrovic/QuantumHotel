@@ -34,3 +34,6 @@ build/
 
 ### Properties ###
 backend/src/main/resources/application.properties
+
+### User files ###
+backend/uploads

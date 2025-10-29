@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Access Denied - Quantum Hotel</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            text-align: center;
+            margin-top: 10%;
+            color: #333;
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #c0392b;
+        }
+        p {
+            margin: 1rem 0;
+            font-size: 1.1rem;
+        }
+        a {
+            color: #2980b9;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<h1>Access Denied</h1>
+<p>You don't have permission to access this page.</p>
+<p><a href="/" th:href="@{/}">Return to home page</a></p>
+</body>
+</html>
