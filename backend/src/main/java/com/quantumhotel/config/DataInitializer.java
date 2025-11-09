@@ -23,11 +23,12 @@ public class DataInitializer {
                 admin.setPasswordHash(passwordEncoder.encode("admin123"));
                 admin.setEnabled(true);
                 admin.setAccountNonLocked(true);
+                admin.setEmailVerified(true);
 
                 userRepository.save(admin);
-                System.out.println("✅ Default ADMIN user created: admin / admin123");
+                System.out.println("Default ADMIN user created: admin / admin123");
             } else {
-                System.out.println("ℹ️ Admin user already exists, skipping creation.");
+                System.out.println("Admin user already exists, skipping creation.");
             }
         };
     }

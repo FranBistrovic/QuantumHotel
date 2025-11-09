@@ -53,4 +53,17 @@ public class User extends com.quantumhotel.entity.AbstractEntity {
 
     @Column(nullable = false)
     private boolean requirePasswordChange = false;
+
+    @Column(nullable = false)
+    private boolean emailVerified = false;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "reset_token")
+    private String resetToken;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider", length = 32, nullable = false)
+    private AuthProvider provider = AuthProvider.LOCAL;
 }

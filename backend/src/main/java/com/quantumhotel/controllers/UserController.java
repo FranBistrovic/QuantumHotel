@@ -28,9 +28,9 @@ public class UserController {
         Object principal = authentication.getPrincipal();
 
         if (principal instanceof OidcUser oidcUser) {
-            String providerId = oidcUser.getAttribute("sub");
-            User user = userRepository.findByProviderId(providerId)
-                    .orElseThrow(() -> new RuntimeException("OIDC user not found: " + providerId));
+            String email = oidcUser.getAttribute("email");
+            User user = userRepository.findByUsername(email)
+                    .orElseThrow(() -> new RuntimeException("OIDC user not found: " + email));
             return UserDto.from(user);
         }
 

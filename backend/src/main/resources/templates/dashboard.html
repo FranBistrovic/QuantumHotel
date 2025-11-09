@@ -55,8 +55,7 @@
     <img th:src="@{${user.imageUrl}}" alt="Profile Picture" class="profile-pic">
     <h1>Welcome, <span th:text="${user.firstName + ' ' + user.lastName}">User</span>!</h1>
     <p><strong>Email:</strong> <span th:text="${user.email}">user@example.com</span></p>
-    <p>You are successfully logged in with Google OAuth2</p>
-
+    <p>You are successfully logged in: <span th:text="${user.provider}"></span></p>
     <form th:action="@{/logout}" method="post">
         <button type="submit" class="logout-btn">Logout</button>
     </form>
