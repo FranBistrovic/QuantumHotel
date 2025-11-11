@@ -2,31 +2,41 @@
 import { useState } from "react";
 
 export default function RegisterPage() {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const response = await fetch("http://localhost:8080/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
+  try {
+    const response = await fetch("http://localhost:8080/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ firstName, lastName, email, password }),
+    });
 
-      if (response.ok) {
-        setMessage("✅ Uspješna registracija!");
-      } else {
-        const error = await response.text();
-        setMessage("❌ Greška: " + error);
+    if (response.ok) {
+      setMessage("✅ Uspješna registracija!");
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 800);
+    } else {
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        setMessage("❌ Greška: " + (json.error || json.message || "Nepoznata greška."));
+      } catch {
+        setMessage("❌ Greška: " + text);
       }
-    } catch (err) {
-      setMessage("⚠️ Server nije dostupan.");
     }
-  };
+  } catch (err) {
+    setMessage("⚠️ Server nije dostupan.");
+  }
+};
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-[#800020]">
@@ -37,9 +47,17 @@ export default function RegisterPage() {
       >
         <input
           type="text"
-          placeholder="Ime i prezime"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          placeholder="Ime"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          className="w-full p-2 mb-4 border rounded-lg"
+          required
+        />
+        <input
+          type="text"
+          placeholder="Prezime"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
           className="w-full p-2 mb-4 border rounded-lg"
           required
         />
