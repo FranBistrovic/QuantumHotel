@@ -6,6 +6,7 @@ import com.quantumhotel.services.CustomOidcUserService;
 import com.quantumhotel.users.User;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,13 +31,16 @@ public class SecurityConfig {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Value("${app.domain}")
+    private String domain;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         // Public pages and assets
-                        .requestMatchers("/", "/login", "/api/auth/**", "/oauth2/**", "/css/**", "/js/**", "/images/**", "/logout").permitAll()
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/css/**", "/js/**", "/images/**", "/logout").permitAll()
 
                         // Admin-only API
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -53,7 +57,7 @@ public class SecurityConfig {
                         .loginPage("/login") // normal user login page
                         .userInfoEndpoint(userInfo -> userInfo.oidcUserService(customOidcUserService))
                         .successHandler((request, response, authentication) -> {
-                            response.sendRedirect("http://localhost:3000");
+                            response.sendRedirect("/");
                         })
                         .failureHandler((request, response, exception) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -68,7 +72,7 @@ public class SecurityConfig {
                 )
 
                 .formLogin(form -> form
-                        .loginPage("/login")
+                        .loginPage("/api/auth/login")
                         .successHandler((request, response, authentication) -> {
                             response.setStatus(HttpServletResponse.SC_OK);
                             response.setContentType("application/json;charset=UTF-8");
@@ -149,7 +153,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        String frontendOrigin = "https://" + domain;
+	configuration.setAllowedOrigins(List.of(
+            "http://localhost:3000", // local dev
+            frontendOrigin           // deployed frontend
+    	));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
