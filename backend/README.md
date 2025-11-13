@@ -1,25 +1,24 @@
 # Quantum Hotel Backend
 
-The Quantum Hotel backend powers authentication, user management, email login, OAuth2 login, and role-based access.  
-It is built using **Spring Boot**, **Spring Security**, **PostgreSQL**, and **Docker Compose**.
+Backend sustava Quantum Hotel upravlja autentifikacijom, korisničkim računima, prijavom putem e-pošte, OAuth2 prijavom i pristupom temeljenim na ulogama.
+Izgrađen je korištenjem **Spring Boota**, **Spring Securityja**, **PostgreSQL-a** i **Docker Composea**.
 
 ---
 
-## Features
+## Značajke
 
-- Email/password registration  
-- Email verification flow  
-- Password reset via email  
-- Login with Google OAuth2  
-- Local or OAuth2 account support  
-- Role-based authentication:  
-  - USER  
-  - STAFF  
-  - ADMIN  
-- Staff/Admin dashboards  
-- JSON-based login/logout responses  
-- PostgreSQL database integration  
-- Docker Compose setup  
+- Registracija putem e-pošte i lozinke
+- Verifikacija e-pošte
+- Obnova lozinke putem e-pošte
+- Prijava putem Google OAuth2
+- Podrška za lokalne i OAuth2 račune
+- Autentifikacija temeljena na ulogama:
+  - USER
+  - STAFF
+  - ADMIN
+- JSON odgovori za prijavu/odjavu
+- Integracija s PostgreSQL bazom podataka
+- Docker Compose konfiguracija
 
 ---
 
