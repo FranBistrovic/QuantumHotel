@@ -26,14 +26,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/user/me", { credentials: "include" })
+    fetch("/api/user/me", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setUser(data))
       .catch(() => { });
   }, []);
 
   const handleLogout = async () => {
-    await fetch("http://localhost:8080/logout", {
+    await fetch("/logout", {
       method: "POST",
       credentials: "include",
     });
@@ -87,7 +87,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <Image
                     src={
                       user.imageUrl
-                        ? `http://localhost:8080${user.imageUrl}`
+                        ? `${user.imageUrl}`
                         : "/default-avatar.jpg"
                     }
                     alt="Avatar"

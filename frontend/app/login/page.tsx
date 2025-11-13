@@ -14,7 +14,7 @@ export default function LoginPage() {
     formData.append("username", username);
     formData.append("password", password);
 
-    const response = await fetch("http://localhost:8080/login", {
+    const response = await fetch("/api/auth/login", {
       method: "POST",
       credentials: "include",
       body: formData
@@ -68,7 +68,7 @@ export default function LoginPage() {
         </button>
 
         <a
-          href="http://localhost:8080/oauth2/authorization/google"
+          href="/oauth2/authorization/google"
           className="google-btn flex items-center gap-3 mt-6 px-4 py-2 border border-[#d4af37] rounded-lg hover:bg-[#fff7e6] transition"
         >
           <svg className="google-icon w-6 h-6" viewBox="0 0 24 24">
