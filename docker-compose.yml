@@ -1,17 +1,33 @@
 services:
+    db:
+    image: postgres:16
+    container_name: quantumhotel-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: quantumhotel
+      POSTGRES_USER: quantum_user
+      POSTGRES_PASSWORD: quantum-db-password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - quantum-net
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: quantumhotel-backend
     restart: unless-stopped
+    depends_on:
+      - db
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://quantum-db.chk0yw6kebmy.eu-north-1.rds.amazonaws.com:5432/postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/quantumhotel
       SPRING_DATASOURCE_USERNAME: quantum_user
       SPRING_DATASOURCE_PASSWORD: quantum-db-password
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: docker
-      DOMAIN: quantumhotel.duckdns.org
+      DOMAIN: localhost
     ports:
       - "8080:8080"
     networks:
