@@ -85,17 +85,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {/* Avatar + Name */}
                 <div className="flex items-center space-x-3">
                   <Image
-                    src={
-                      user.imageUrl
-                        ? `${user.imageUrl}`
-                        : "/default-avatar.jpg"
-                    }
-                    alt="Avatar"
-                    width={45}
-                    height={45}
-                    unoptimized
-                    className="rounded-full border border-[#d5a853] object-cover"
-                  />
+					  src={
+						user?.imageUrl
+						  ? user.imageUrl.startsWith("http")
+							? user.imageUrl
+							: `${process.env.NEXT_PUBLIC_API_URL}${user.imageUrl}`
+						  : "/default-avatar.jpg"
+					  }
+					  alt="Avatar"
+					  width={45}
+					  height={45}
+					  unoptimized
+					  className="rounded-full border border-[#d5a853] object-cover"
+					/>
                   <span className="text-lg">{user.firstName} {user.lastName}</span>
                 </div>
 
