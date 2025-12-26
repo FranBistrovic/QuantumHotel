@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -41,6 +42,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public pages and assets
                         .requestMatchers("/api/auth/**", "/oauth2/**", "/css/**", "/js/**", "/images/**", "/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/faq").permitAll()
+
 
                         // Admin-only API
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -49,7 +52,7 @@ public class SecurityConfig {
                         // Staff or Admin API
                         .requestMatchers("/api/staff/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers("/staff/**").hasAnyRole("ADMIN","STAFF")
-
+                        .requestMatchers("/api/faq/**").hasAnyRole("STAFF", "ADMIN")
                         .anyRequest().authenticated()
                 )
 
