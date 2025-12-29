@@ -1,7 +1,7 @@
 # Quantum Hotel
 
 # Opis projekta
-Ovaj projekt je reultat timskog rada u sklopu projeknog zadatka kolegija [Programsko inženjerstvo](https://www.fer.unizg.hr/predmet/proinz) na Fakultetu elektrotehnike i računarstva Sveučilišta u Zagrebu.
+Ovaj projekt je rezultat timskog rada u sklopu projeknog zadatka kolegija [Programsko inženjerstvo](https://www.fer.unizg.hr/predmet/proinz) na Fakultetu elektrotehnike i računarstva Sveučilišta u Zagrebu.
 
 S obzirom na brzi razvoj tehnologije i rast očekivanja gostiju, hoteli se suočavaju s izazovima u vođenju evidencije rezervacija, optimizaciji zauzeća i komunikaciji s gostima. Trenutne metode upravljanja često dovode do preklapanja rezervacija, nesigurnosti u cijene i nedostatka transparentnosti. Također, ručno upravljanje podacima može uzrokovati pogreške i povećati operativni stres.
 
