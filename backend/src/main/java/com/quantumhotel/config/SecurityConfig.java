@@ -42,7 +42,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public pages and assets
                         .requestMatchers("/api/auth/**", "/oauth2/**", "/css/**", "/js/**", "/images/**", "/logout").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/faq").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/faq/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/articles/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/support/questions").authenticated()
 
 
                         // Admin-only API
@@ -50,9 +52,15 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // Staff or Admin API
+
                         .requestMatchers("/api/staff/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers("/staff/**").hasAnyRole("ADMIN","STAFF")
-                        .requestMatchers("/api/faq/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/faq/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/faq/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/faq/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/articles/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/articles/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/articles/**").hasAnyRole("STAFF", "ADMIN")
                         .anyRequest().authenticated()
                 )
 
