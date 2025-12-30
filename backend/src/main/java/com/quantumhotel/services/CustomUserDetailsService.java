@@ -22,6 +22,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
+        if (!user.isEnabled() || user.getDeletedAt() != null) {
+            throw new DisabledException("User disabled");
+        }
+
         if (!user.isEmailVerified()) {
             throw new DisabledException("Please verify your email before logging in.");
         }
