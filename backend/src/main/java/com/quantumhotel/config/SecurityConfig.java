@@ -9,8 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -36,20 +39,35 @@ public class SecurityConfig {
     private String domain;
 
     @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         // Public pages and assets
                         .requestMatchers("/api/auth/**", "/oauth2/**", "/css/**", "/js/**", "/images/**", "/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/faq/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/articles/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/support/questions").authenticated()
+
 
                         // Admin-only API
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // Staff or Admin API
+
                         .requestMatchers("/api/staff/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers("/staff/**").hasAnyRole("ADMIN","STAFF")
-
+                        .requestMatchers(HttpMethod.POST, "/api/faq/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/faq/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/faq/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/articles/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/articles/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/articles/**").hasAnyRole("STAFF", "ADMIN")
                         .anyRequest().authenticated()
                 )
 
@@ -115,6 +133,10 @@ public class SecurityConfig {
 
                             new ObjectMapper().writeValue(response.getOutputStream(), body);
                         })
+                )
+                .sessionManagement(session -> session
+                        .maximumSessions(1)
+                        .sessionRegistry(sessionRegistry())
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {

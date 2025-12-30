@@ -11,6 +11,9 @@ public class EmailService {
     @Value("${app.domain}")
     private String domain;
 
+    @Value("${app.support.email}")
+    private String supportEmail;
+
     @Autowired
     private JavaMailSender mailSender;
     
@@ -25,7 +28,20 @@ public class EmailService {
         sendEmail(to, "Reset your Quantum Hotel password",
                 "Click this link to reset your password:\n" + link);
     }
-
+    public void sendSupportQuestion(String senderEmail, String senderName, String subject, String message) {
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(supportEmail);
+        mailMessage.setReplyTo(senderEmail);
+        mailMessage.setSubject("Support Question: " + subject);
+        mailMessage.setText(
+                "Support Question Received\n\n" +
+                        "From: " + senderName + "\n" +
+                        "Email: " + senderEmail + "\n\n" +
+                        "Subject: " + subject + "\n\n" +
+                        "Message:\n" + message
+        );
+        mailSender.send(mailMessage);
+    }
     private void sendEmail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
