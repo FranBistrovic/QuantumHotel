@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
+
 @Entity
 @Table(
         name = "users",
@@ -66,4 +68,7 @@ public class User extends com.quantumhotel.entity.AbstractEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_provider", length = 32, nullable = false)
     private AuthProvider provider = AuthProvider.LOCAL;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
 }
