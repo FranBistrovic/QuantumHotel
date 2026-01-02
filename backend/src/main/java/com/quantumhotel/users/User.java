@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(
@@ -38,9 +39,16 @@ public class User extends com.quantumhotel.entity.AbstractEntity {
     @Column(name = "gender", length = 16)
     private Gender gender;
 
+    @Column(name = "city", length = 32)
+    private String city;
+
+
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+
 
     @Column(name = "provider_id", length = 128)
     private String providerId;

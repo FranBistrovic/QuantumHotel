@@ -66,6 +66,12 @@ public class SecurityConfig {
                         // Admin-only API
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers(
+                                "/api/statistics",
+                                "/api/statistics/**/export/xml",
+                                "/api/statistics/**/export/pdf",
+                                "/api/statistics/**/export/xlsx"
+                        ).hasRole("ADMIN")
 
                         // Staff or Admin API
 
