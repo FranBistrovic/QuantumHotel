@@ -53,6 +53,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/articles/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/support/questions").authenticated()
 
+                        // User reservation routes
+                        .requestMatchers(HttpMethod.GET, "/api/reservations/me").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/reservations").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/reservations/**").authenticated()
+
+                        // Admin/Staff reservation routes
+                        .requestMatchers(HttpMethod.GET, "/api/admin/reservations/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/admin/reservations/*/confirm").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/admin/reservations/*/reject").hasAnyRole("ADMIN", "STAFF")
 
                         // Admin-only API
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

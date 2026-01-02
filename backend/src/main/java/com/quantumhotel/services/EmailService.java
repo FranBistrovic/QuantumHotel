@@ -11,9 +11,6 @@ public class EmailService {
     @Value("${app.domain}")
     private String domain;
 
-    @Value("${app.support.email}")
-    private String supportEmail;
-
     @Autowired
     private JavaMailSender mailSender;
     
@@ -30,7 +27,7 @@ public class EmailService {
     }
     public void sendSupportQuestion(String senderEmail, String senderName, String subject, String message) {
         SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setTo(supportEmail);
+        mailMessage.setTo(domain);
         mailMessage.setReplyTo(senderEmail);
         mailMessage.setSubject("Support Question: " + subject);
         mailMessage.setText(
@@ -49,4 +46,24 @@ public class EmailService {
         message.setText(text);
         mailSender.send(message);
     }
+
+    public void sendReservationConfirmed(String to, Long reservationId) {
+        sendEmail(
+                to,
+                "Reservation Confirmed",
+                "Your reservation #" + reservationId + " has been CONFIRMED.\n\n"
+                        + domain
+        );
+    }
+
+    public void sendReservationRejected(String to, Long reservationId, String reason) {
+        sendEmail(
+                to,
+                "Reservation Rejected",
+                "Your reservation #" + reservationId + " has been REJECTED.\n\n"
+                        + (reason != null ? "Reason: " + reason + "\n\n" : "")
+                        + domain
+        );
+    }
+
 }
