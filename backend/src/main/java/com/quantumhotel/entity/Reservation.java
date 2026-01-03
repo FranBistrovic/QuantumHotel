@@ -8,6 +8,8 @@ import lombok.Setter;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "reservation")
@@ -50,4 +52,18 @@ public class Reservation{
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "un_id", nullable = false)
     private AccommodationUnit unit;
+
+    //amenities
+    @OneToMany(
+            mappedBy = "reservation",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<ReservationAmenity> reservationAmenities = new ArrayList<>();
+
+    public void addAmenity(ReservationAmenity ra) {
+        reservationAmenities.add(ra);
+        ra.setReservation(this);
+    }
 }

@@ -6,11 +6,9 @@ import com.quantumhotel.controllers.dto.ReservationDetailsDTO;
 import com.quantumhotel.controllers.dto.ReservationListDTO;
 import com.quantumhotel.controllers.dto.ReservationPatchDto;
 import com.quantumhotel.entity.Reservation;
+import com.quantumhotel.entity.ReservationAmenity;
 import com.quantumhotel.entity.ReservationStatus;
-import com.quantumhotel.repository.AccommodationCategoryRepository;
-import com.quantumhotel.repository.AccommodationUnitRepository;
-import com.quantumhotel.repository.ReservationRepository;
-import com.quantumhotel.repository.UserRepository;
+import com.quantumhotel.repository.*;
 import com.quantumhotel.services.EmailService;
 import com.quantumhotel.users.User;
 import org.springframework.data.domain.Sort;
@@ -32,18 +30,22 @@ public class ReservationService {
     private final AccommodationUnitRepository unitRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final AmenityRepository amenityRepository;
+
     public ReservationService(
             ReservationRepository reservationRepository,
             AccommodationCategoryRepository categoryRepository,
             AccommodationUnitRepository unitRepository,
             UserRepository userRepository,
-            EmailService emailService
+            EmailService emailService,
+            AmenityRepository amenityRepository
     ) {
         this.reservationRepository = reservationRepository;
         this.categoryRepository = categoryRepository;
         this.unitRepository = unitRepository;
         this.userRepository = userRepository;
         this.emailService=emailService;
+        this.amenityRepository=amenityRepository;
     }
 
     // ================= USER =================
@@ -58,6 +60,20 @@ public class ReservationService {
         r.setUnit(unitRepository.findById(dto.getUnitId()).orElseThrow());
         r.setCategory(categoryRepository.findById(dto.getCategoryId()).orElseThrow());
         r.setStatus(ReservationStatus.PENDING);
+
+        //amenities
+        if (dto.getAmenities() != null && !dto.getAmenities().isEmpty()) {
+            dto.getAmenities().forEach(aReq -> {
+                ReservationAmenity ra = new ReservationAmenity();
+                ra.setAmenity(
+                        amenityRepository.findById(aReq.getAmenityId())
+                                .orElseThrow(() ->
+                                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Amenity not found"))
+                );
+                ra.setQuantity(aReq.getQuantity());
+                r.addAmenity(ra); //
+            });
+        }
 
         return reservationRepository.save(r);
     }
@@ -110,8 +126,6 @@ public class ReservationService {
                 .map(ReservationListDTO::from)
                 .toList();
     }
-
-
 
     public void confirm(Long id, String username) {
         User admin = resolveUser(username);
