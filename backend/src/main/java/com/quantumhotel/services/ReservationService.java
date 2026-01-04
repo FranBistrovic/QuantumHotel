@@ -5,6 +5,7 @@ import com.quantumhotel.controllers.dto.ReservationCreateDTO;
 import com.quantumhotel.controllers.dto.ReservationDetailsDTO;
 import com.quantumhotel.controllers.dto.ReservationListDTO;
 import com.quantumhotel.controllers.dto.ReservationPatchDto;
+import com.quantumhotel.entity.AccommodationUnit;
 import com.quantumhotel.entity.Reservation;
 import com.quantumhotel.entity.ReservationAmenity;
 import com.quantumhotel.entity.ReservationStatus;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,8 +59,16 @@ public class ReservationService {
         r.setDateFrom(dto.getDateFrom());
         r.setDateTo(dto.getDateTo());
         r.setUser(user);
-        r.setUnit(unitRepository.findById(dto.getUnitId()).orElseThrow());
+
+        AccommodationUnit unit = findFreeUnit(
+                dto.getCategoryId(),
+                dto.getDateFrom(),
+                dto.getDateTo()
+        );
+
+        r.setUnit(unit);
         r.setCategory(categoryRepository.findById(dto.getCategoryId()).orElseThrow());
+
         r.setStatus(ReservationStatus.PENDING);
 
         //amenities
@@ -131,6 +141,19 @@ public class ReservationService {
         User admin = resolveUser(username);
         Reservation r = getReservation(id);
 
+        List<Reservation> conflicts =
+                reservationRepository.findConfirmedOverlaps(
+                        r.getUnit().getId(),
+                        r.getDateFrom(),
+                        r.getDateTo()
+                );
+
+        if (!conflicts.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Unit is already booked in selected period"
+            );
+        }
         r.setStatus(ReservationStatus.CONFIRMED);
         r.setProcessedAt(Instant.now());
         r.setProcessedBy(admin);
@@ -156,8 +179,32 @@ public class ReservationService {
         );
     }
 
-
     // ================= INTERNAL =================
+
+    private AccommodationUnit findFreeUnit(
+            Long categoryId,
+            LocalDate from,
+            LocalDate to
+    ) {
+        List<AccommodationUnit> units =
+                unitRepository.findByCategoryId(categoryId);
+
+        for (AccommodationUnit unit : units) {
+            boolean hasConflict =
+                    !reservationRepository
+                            .findConfirmedOverlaps(unit.getId(), from, to)
+                            .isEmpty();
+
+            if (!hasConflict) {
+                return unit;
+            }
+        }
+
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "No available units for selected category and period"
+        );
+    }
 
     private Reservation getReservation(Long id) {
         return reservationRepository.findById(id)

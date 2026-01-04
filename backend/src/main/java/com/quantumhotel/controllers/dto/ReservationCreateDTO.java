@@ -15,7 +15,6 @@ public class ReservationCreateDTO {
     private LocalDate dateFrom;
     private LocalDate dateTo;
     private Long categoryId;
-    private Long unitId;
     //amenities
     private List<AmenityRequest> amenities;
 
