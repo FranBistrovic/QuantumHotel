@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -78,6 +79,8 @@ public class UserService {
         if (body.lastName != null) user.setLastName(body.lastName);
         if (body.gender != null) user.setGender(body.gender);
         if (body.imageUrl != null) user.setImageUrl(body.imageUrl);
+        if (body.city != null) user.setCity(body.city);
+        if (body.dateOfBirth != null) user.setDateOfBirth(body.dateOfBirth);
 
         try {
             return UserDto.from(userRepository.save(user));
@@ -113,6 +116,8 @@ public class UserService {
         u.setLastName(body.lastName);
         u.setGender(body.gender);
         u.setImageUrl(body.imageUrl);
+        u.setCity(body.city);
+        u.setDateOfBirth(body.dateOfBirth);
 
         // Provider fields
         if (body.provider != null) u.setProvider(body.provider);
@@ -151,6 +156,8 @@ public class UserService {
         if (body.lastName != null) u.setLastName(body.lastName);
         if (body.gender != null) u.setGender(body.gender);
         if (body.imageUrl != null) u.setImageUrl(body.imageUrl);
+        if (body.city != null) u.setCity(body.city);
+        if (body.dateOfBirth != null) u.setDateOfBirth(body.dateOfBirth);
 
         // Provider fields
         if (body.provider != null) u.setProvider(body.provider);
@@ -217,6 +224,8 @@ public class UserService {
         public String lastName;
         public Gender gender;
         public String imageUrl;
+        public String city;
+        public LocalDate dateOfBirth;
     }
 
     // For POST /api/admin/users
@@ -227,6 +236,8 @@ public class UserService {
         public String lastName;
         public Gender gender;
         public String imageUrl;
+        public String city;
+        public LocalDate dateOfBirth;
 
         public Role role;
 
@@ -252,6 +263,8 @@ public class UserService {
         public String lastName;
         public Gender gender;
         public String imageUrl;
+        public String city;
+        public LocalDate dateOfBirth;
 
         public AuthProvider provider;
         public String providerId;
