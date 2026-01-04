@@ -42,13 +42,12 @@ public class User extends com.quantumhotel.entity.AbstractEntity {
     @Column(name = "city", length = 32)
     private String city;
 
-
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
-
-
 
     @Column(name = "provider_id", length = 128)
     private String providerId;

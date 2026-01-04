@@ -52,11 +52,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/faq/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/articles/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/support/questions").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/room-categories/**").permitAll()
 
                         // User reservation routes
                         .requestMatchers(HttpMethod.GET, "/api/reservations/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/reservations").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/reservations/**").authenticated()
+
+                        //Admin/staff rooms routes
+                        .requestMatchers(HttpMethod.GET, "/api/rooms/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/addons/**").authenticated()
 
                         // Admin/Staff reservation routes
                         .requestMatchers(HttpMethod.GET, "/api/admin/reservations/**").hasAnyRole("ADMIN", "STAFF")
@@ -64,14 +69,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/admin/reservations/*/reject").hasAnyRole("ADMIN", "STAFF")
 
                         // Admin-only API
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers(
-                                "/api/statistics",
-                                "/api/statistics/**/export/xml",
-                                "/api/statistics/**/export/pdf",
-                                "/api/statistics/**/export/xlsx"
-                        ).hasRole("ADMIN")
+                        .requestMatchers("/api/statistics/**").hasAnyRole("ADMIN","STAFF")
 
                         // Staff or Admin API
 
@@ -83,6 +81,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/articles/**").hasAnyRole("STAFF", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/articles/**").hasAnyRole("STAFF", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/articles/**").hasAnyRole("STAFF", "ADMIN")
+
+                        //reservations and rooms
+                        .requestMatchers(HttpMethod.POST, "/api/room-categories").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/room-categories/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/room-categories/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/rooms").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/rooms/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/rooms/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/addons/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/addons/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/addons/**").hasAnyRole("STAFF", "ADMIN")
                         .anyRequest().authenticated()
                 )
 

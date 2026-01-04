@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.antlr.v4.runtime.misc.NotNull;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Setter
@@ -14,5 +15,12 @@ public class ReservationCreateDTO {
     private LocalDate dateFrom;
     private LocalDate dateTo;
     private Long categoryId;
-    private Long unitId;
+    //amenities
+    private List<AmenityRequest> amenities;
+
+    @Data
+    public static class AmenityRequest {
+        private Long amenityId;
+        private int quantity;
+    }
 }
