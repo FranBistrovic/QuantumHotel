@@ -13,14 +13,13 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     List<Reservation> findByUserId(Long userId);
 
     @Query("""
-       SELECT r.id, r.dateFrom, r.dateTo, r.createdAt, r.processedAt,
-              r.status, u.city, u.gender,
-              c.price
-       FROM Reservation r
-       JOIN r.user u
-       JOIN r.category c
-       WHERE r.dateFrom >= :startDate AND r.dateTo <= :endDate
-       """)
+        SELECT r.id, r.dateFrom, r.dateTo, r.createdAt, r.processedAt,
+               r.status, u.city, u.gender, c.price, u.dateOfBirth
+        FROM Reservation r
+        JOIN r.user u
+        JOIN r.category c
+        WHERE r.dateFrom >= :startDate AND r.dateTo <= :endDate
+        """)
     List<Object[]> findReservationsInDateRange(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
