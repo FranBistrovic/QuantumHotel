@@ -43,12 +43,12 @@ public class StatisticsService {
         stats.setTotalReservations(reservations.size());
 
         long completedCount = reservations.stream()
-                .filter(r -> "COMPLETED".equals(r[6])) // res_status
+                .filter(r -> "COMPLETED".equals(r[5])) // res_status
                 .count();
         stats.setCompletedReservations((int) completedCount);
 
         long cancelledCount = reservations.stream()
-                .filter(r -> "CANCELLED".equals(r[6]))
+                .filter(r -> "CANCELLED".equals(r[5]))
                 .count();
         stats.setCancelledReservations((int) cancelledCount);
 
@@ -85,8 +85,8 @@ public class StatisticsService {
 
     private BigDecimal calculateTotalRevenue(List<Object[]> reservations) {
         return reservations.stream()
-                .filter(r -> "COMPLETED".equals(r[6]))
-                .map(r -> (BigDecimal) r[7]) // Assuming price is at index 7
+                .filter(r -> "COMPLETED".equals(r[5]))
+                .map(r -> (BigDecimal) r[8]) // Assuming price is at index 7
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
@@ -110,7 +110,7 @@ public class StatisticsService {
 
     private Map<String, Integer> groupReservationsByCity(List<Object[]> reservations) {
         return reservations.stream()
-                .map(r -> (String) r[8]) // usr_city
+                .map(r -> (String) r[6]) // usr_city
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(
                         city -> city,
@@ -120,7 +120,7 @@ public class StatisticsService {
 
     private Map<String, Integer> groupReservationsByGender(List<Object[]> reservations) {
         return reservations.stream()
-                .map(r -> (String) r[9]) // usr_gender
+                .map(r -> (String) r[7]) // usr_gender
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(
                         gender -> gender,
@@ -132,7 +132,7 @@ public class StatisticsService {
         Map<String, Integer> ageGroups = new HashMap<>();
 
         for (Object[] r : reservations) {
-            LocalDate birthDate = (LocalDate) r[10]; // usr_date_of_birth
+            LocalDate birthDate = (LocalDate) r[9]; // usr_date_of_birth
             if (birthDate != null) {
                 int age = Period.between(birthDate, LocalDate.now()).getYears();
                 String ageGroup = getAgeGroup(age);
