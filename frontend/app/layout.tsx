@@ -22,14 +22,18 @@ const poppins = Poppins({
 //   description: "Luxury redefined – welcome to Quantum Hotel",
 // };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     fetch("/api/user/me", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setUser(data))
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   const handleLogout = async () => {
@@ -66,39 +70,52 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
           {/* Navigation */}
           <nav className="space-y-4 text-lg">
-
-            <Link href="/" className="block hover:text-white">🏠 Početna</Link>
-            <Link href="/booking" className="block hover:text-white">📅 Rezervacija</Link>
+            <Link href="/" className="block hover:text-white">
+              🏠 Početna
+            </Link>
+            <Link href="/booking" className="block hover:text-white">
+              📅 Rezervacija
+            </Link>
 
             {!user && (
               <>
-                <Link href="/login" className="block hover:text-white">🔑 Prijava</Link>
-                <Link href="/register" className="block hover:text-white">📝 Registracija</Link>
+                <Link href="/login" className="block hover:text-white">
+                  🔑 Prijava
+                </Link>
+                <Link href="/register" className="block hover:text-white">
+                  📝 Registracija
+                </Link>
               </>
             )}
 
-            <Link href="/faq" className="block hover:text-white">❓ Česta pitanja</Link>
-            <Link href="/articles" className="block hover:text-white">📰 Članci</Link>
+            <Link href="/faq" className="block hover:text-white">
+              ❓ Česta pitanja
+            </Link>
+            <Link href="/articles" className="block hover:text-white">
+              📰 Članci
+            </Link>
 
             {user && (
               <div className="mt-auto flex flex-col gap-3 pt-6 border-t border-[#d5a853] items-start">
                 {/* Avatar + Name */}
                 <div className="flex items-center space-x-3">
                   <Image
-					  src={
-						user?.imageUrl
-						  ? user.imageUrl.startsWith("http")
-							? user.imageUrl
-							: `${process.env.NEXT_PUBLIC_API_URL}${user.imageUrl}`
-						  : "/default-avatar.jpg"
-					  }
-					  alt="Avatar"
-					  width={45}
-					  height={45}
-					  unoptimized
-					  className="rounded-full border border-[#d5a853] object-cover"
-					/>
-                  <span className="text-lg">{user.firstName} {user.lastName}</span>
+                    src={
+                      user?.imageUrl
+                        ? user.imageUrl.startsWith("http")
+                          ? user.imageUrl
+                          : `${process.env.NEXT_PUBLIC_API_URL}${user.imageUrl}`
+                        : "/default-avatar.jpg"
+                    }
+                    alt="Avatar"
+                    width={45}
+                    height={45}
+                    unoptimized
+                    className="rounded-full border border-[#d5a853] object-cover"
+                  />
+                  <span className="text-lg">
+                    {user.firstName} {user.lastName}
+                  </span>
                 </div>
 
                 {/* Logout Button (now left aligned) */}
@@ -110,10 +127,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </button>
               </div>
             )}
-
           </nav>
-
-
         </aside>
 
         {/* Main content */}

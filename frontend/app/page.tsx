@@ -3,10 +3,13 @@ import Image from "next/image";
 export default function HomePage() {
   return (
     <div className="space-y-8">
-      <h2 className="text-4xl font-bold text-[#800020]">Dobrodošli u Quantum Hotel</h2>
+      <h2 className="text-4xl font-bold text-[#800020]">
+        Dobrodošli u Quantum Hotel
+      </h2>
       <p className="text-lg">
-        Quantum Hotel nudi spoj luksuza i modernog komfora. Smješten u samom srcu grada,
-        idealno je mjesto za opuštanje, poslovne sastanke i stvaranje nezaboravnih uspomena u obiteljskom okruženju.
+        Quantum Hotel nudi spoj luksuza i modernog komfora. Smješten u samom
+        srcu grada, idealno je mjesto za opuštanje, poslovne sastanke i
+        stvaranje nezaboravnih uspomena u obiteljskom okruženju.
       </p>
 
       {/* Kontakt */}
@@ -17,40 +20,38 @@ export default function HomePage() {
         <p>✉️ Email: info@quantumhotel.hr</p>
       </div>
 
-      
-{/* Galerija slika */}
-<div className="grid grid-cols-2 gap-6 w-full">
-  {/* Lijeva slika - hotel izvana */}
-  <div className="relative w-full h-[500px]">
-    <Image
-      src="/bordo izvana hotel.png"
-      alt="Hotel izvana"
-      fill
-      className="object-cover rounded-2xl shadow-lg"
-    />
-  </div>
+      {/* Galerija slika */}
+      <div className="grid grid-cols-2 gap-6 w-full">
+        {/* Lijeva slika - hotel izvana */}
+        <div className="relative w-full h-[500px]">
+          <Image
+            src="/bordo izvana hotel.png"
+            alt="Hotel izvana"
+            fill
+            className="object-cover rounded-2xl shadow-lg"
+          />
+        </div>
 
-  {/* Desna kolona - soba + bazen */}
-  <div className="grid grid-rows-2 gap-6">
-    <div className="relative w-full h-[245px]">
-      <Image
-        src="/bordo soba.png"
-        alt="Soba"
-        fill
-        className="object-cover rounded-2xl shadow-lg"
-      />
-    </div>
-    <div className="relative w-full h-[245px]">
-      <Image
-        src="/bazeni.png"
-        alt="Bazen"
-        fill
-        className="object-cover rounded-2xl shadow-lg"
-      />
-    </div>
-  </div>
-</div>
-
+        {/* Desna kolona - soba + bazen */}
+        <div className="grid grid-rows-2 gap-6">
+          <div className="relative w-full h-[245px]">
+            <Image
+              src="/bordo soba.png"
+              alt="Soba"
+              fill
+              className="object-cover rounded-2xl shadow-lg"
+            />
+          </div>
+          <div className="relative w-full h-[245px]">
+            <Image
+              src="/bazeni.png"
+              alt="Bazen"
+              fill
+              className="object-cover rounded-2xl shadow-lg"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Google Maps */}
       <div>
