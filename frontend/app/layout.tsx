@@ -30,7 +30,7 @@ export default function RootLayout({
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    fetch("/api/user/me", { credentials: "include" })
+    fetch("/api/users/me", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setUser(data))
       .catch(() => {});
