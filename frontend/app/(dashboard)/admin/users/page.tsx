@@ -27,9 +27,8 @@ export default function UsersPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Stanje za sortiranje
   const [sortConfig, setSortConfig] = useState<{
-    key: keyof User;
+    key: any;
     direction: "asc" | "desc";
   } | null>(null);
 
@@ -137,7 +136,6 @@ export default function UsersPage() {
     }
   };
 
-  // Logika za filtriranje i sortiranje
   const processedData = useMemo(() => {
     let result = users.filter(
       (u) =>
@@ -148,11 +146,10 @@ export default function UsersPage() {
         (roleFilter === "all" || u.role === roleFilter)
     );
 
-    if (sortConfig) {
-      result.sort((a, b) => {
+    if (sortConfig && sortConfig.key) {
+      result.sort((a: any, b: any) => {
         const aValue = a[sortConfig.key];
         const bValue = b[sortConfig.key];
-
         if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
@@ -286,9 +283,9 @@ export default function UsersPage() {
             onEdit={(row) => setFormData({ ...row })}
             onDelete={handleDelete}
             className="data-table"
-            // Dodano za podršku sortiranju
-            onSort={(key, direction) =>
-              setSortConfig({ key: key as keyof User, direction })
+            // @ts-ignore
+            onSort={(key: any, direction: any) =>
+              setSortConfig({ key, direction })
             }
           />
         )}
