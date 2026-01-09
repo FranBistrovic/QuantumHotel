@@ -1,20 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { DataTable, Column } from "../../../components/DataTable";
 import { Pagination } from "../../../components/Pagination";
 import { FilterBar } from "../../../components/FilterBar";
 import { Modal } from "../../../components/Modal";
-import { Plus } from "lucide-react";
 
 interface Reservation {
   id: number;
   user: {
+    id?: number;
     firstName: string;
     lastName: string;
     email: string;
   };
   room: {
+    id: number;
     roomNumber: string;
   } | null;
   dateFrom: string;
@@ -29,263 +31,271 @@ const statusLabels = {
   REJECTED: "odbijeno",
 };
 
-export default function ReservationsPage() {
+const getErrorMessage = async (response: Response) => {
+  if (response.status === 401) return "❌ Niste prijavljeni.";
+  if (response.status === 403) return "⛔ Nemate ovlasti.";
+  try {
+    const data = await response.json();
+    return data?.message || "⚠️ Greška na serveru.";
+  } catch {
+    return "⚠️ Pogreška.";
+  }
+};
+
+export default function StaffReservationsPage() {
+  const pathname = usePathname();
+  const apiBase = pathname.startsWith("/admin") ? "/api/admin" : "/api/staff";
+
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [formData, setFormData] = useState<Partial<Reservation> | null>(null);
+  const [formData, setFormData] = useState<any | null>(null);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const itemsPerPage = 10;
 
-  // --- Filtriranje podataka ---
+  useEffect(() => {
+    fetchReservations();
+  }, []);
+
+  const fetchReservations = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${apiBase}/reservations?t=${Date.now()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setReservations(Array.isArray(data) ? data : []);
+      } else {
+        setMessage(await getErrorMessage(response));
+      }
+    } catch {
+      setMessage("⚠️ Veza odbijena.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!formData) return;
+    try {
+      const response = await fetch(`${apiBase}/reservations/${formData.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dateFrom: formData.dateFrom,
+          dateTo: formData.dateTo,
+        }),
+      });
+
+      if (response.ok) {
+        await fetchReservations();
+        setMessage("✅ Rezervacija ažurirana!");
+        setFormData(null);
+        setTimeout(() => setMessage(""), 3000);
+      } else {
+        setMessage(await getErrorMessage(response));
+      }
+    } catch {
+      setMessage("⚠️ Greška pri spremanju.");
+    }
+  };
+
+  const updateStatusAction = async (
+    id: number,
+    action: "confirm" | "reject"
+  ) => {
+    try {
+      const response = await fetch(`${apiBase}/reservations/${id}/${action}`, {
+        method: "POST",
+      });
+      if (response.ok) {
+        await fetchReservations();
+        setMessage(
+          `✅ Rezervacija ${action === "confirm" ? "potvrđena" : "odbijena"}.`
+        );
+        setTimeout(() => setMessage(""), 2000);
+      } else {
+        setMessage(await getErrorMessage(response));
+      }
+    } catch {
+      setMessage("⚠️ Greška pri promjeni statusa.");
+    }
+  };
+
   const filteredData = reservations.filter((res) => {
-    const fullName = `${res.user?.firstName || ""} ${
+    const search = searchTerm.toLowerCase();
+    const guestName = `${res.user?.firstName || ""} ${
       res.user?.lastName || ""
     }`.toLowerCase();
-    const matchesSearch =
-      fullName.includes(searchTerm.toLowerCase()) ||
-      res.room?.roomNumber.includes(searchTerm);
-    const matchesStatus = statusFilter === "all" || res.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const roomNum = res.room?.roomNumber?.toLowerCase() || "";
+    return (
+      (guestName.includes(search) || roomNum.includes(search)) &&
+      (statusFilter === "all" || res.status === statusFilter)
+    );
   });
 
-  // --- Paginacija ---
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
   const paginatedData = filteredData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // --- Logika za spremanje (Dodavanje i Uređivanje) ---
-  const handleSave = () => {
-    if (formData) {
-      if (formData.id) {
-        // Ažuriranje postojeće
-        setReservations((prev) =>
-          prev.map((r) =>
-            r.id === formData.id ? (formData as Reservation) : r
-          )
-        );
-      } else {
-        // Dodavanje nove
-        const newRes: Reservation = {
-          id: Date.now(),
-          user: formData.user || {
-            firstName: "Novi",
-            lastName: "Gost",
-            email: "",
-          },
-          room: formData.room || null,
-          dateFrom: formData.dateFrom || new Date().toISOString().split("T")[0],
-          dateTo: formData.dateTo || new Date().toISOString().split("T")[0],
-          status: formData.status || "PENDING",
-          totalPrice: formData.totalPrice || 0,
-        };
-        setReservations((prev) => [newRes, ...prev]);
-      }
-      setFormData(null);
-    }
-  };
-
-  const handleConfirm = (id: number) => {
-    setReservations((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: "CONFIRMED" } : r))
-    );
-  };
-
-  const handleReject = (id: number) => {
-    setReservations((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: "REJECTED" } : r))
-    );
-  };
-
   const columns: Column<Reservation>[] = [
     {
       label: "Gost",
       key: "user",
-      render: (_, row) => `${row.user?.firstName} ${row.user?.lastName}`,
       sortable: true,
+      render: (_, row) => (
+        <div className="flex flex-col">
+          <span className="font-medium text-white">
+            {row.user?.firstName} {row.user?.lastName}
+          </span>
+          <span className="text-xs text-gray-400">{row.user?.email}</span>
+        </div>
+      ),
     },
     {
       label: "Soba",
       key: "room",
-      render: (room) => room?.roomNumber || "Nije dodijeljena",
+      sortable: true,
+      render: (room) => (
+        <span className="text-gray-300 font-mono bg-[#1a1a1a] px-2 py-1 rounded border border-[#262626]">
+          {room?.roomNumber || "---"}
+        </span>
+      ),
     },
-    { key: "dateFrom", label: "Dolazak", sortable: true },
-    { key: "dateTo", label: "Odlazak", sortable: true },
+    { label: "Dolazak", key: "dateFrom", sortable: true },
+    { label: "Odlazak", key: "dateTo", sortable: true },
     {
-      key: "status",
       label: "Status",
-      render: (value: "PENDING" | "CONFIRMED" | "REJECTED") => (
-        <span className={`status-badge ${value.toLowerCase()}`}>
-          {statusLabels[value]}
+      key: "status",
+      render: (value: keyof typeof statusLabels) => (
+        <span className={`status-badge badge-${value?.toLowerCase()}`}>
+          {statusLabels[value] || value}
         </span>
       ),
     },
     {
-      key: "totalPrice",
       label: "Iznos",
-      render: (value) => `${value} €`,
+      key: "totalPrice",
+      sortable: true,
+      render: (val) => (
+        <span className="text-emerald-400 font-semibold">{val} €</span>
+      ),
     },
   ];
 
   return (
-    <div className="dashboard-main">
-      <div className="page-header">
-        <h1 className="page-title">Rezervacije</h1>
-        <button
-          onClick={() =>
-            setFormData({
-              dateFrom: new Date().toISOString().split("T")[0],
-              dateTo: new Date().toISOString().split("T")[0],
-              status: "PENDING",
-              totalPrice: 0,
-              user: { firstName: "", lastName: "", email: "" },
-              room: null,
-            })
-          }
-          className="btn-primary"
-        >
-          <Plus className="icon-small" /> Dodaj rezervaciju
-        </button>
+    <div className="dashboard-main p-6 space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#262626] pb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Upravljanje rezervacijama
+          </h1>
+          {message && (
+            <p
+              className={`text-xs mt-2 font-medium ${
+                message.includes("✅") ? "text-emerald-400" : "text-red-400"
+              }`}
+            >
+              {message}
+            </p>
+          )}
+        </div>
       </div>
 
-      <FilterBar
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Pretraži po gostu ili sobi..."
-      >
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="filter-input select-height-fixed"
+      <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl p-4">
+        <FilterBar
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Traži gosta ili sobu..."
         >
-          <option value="all">Svi statusi</option>
-          <option value="PENDING">Na čekanju</option>
-          <option value="CONFIRMED">Potvrđeno</option>
-          <option value="REJECTED">Odbijeno</option>
-        </select>
-      </FilterBar>
+          <select
+            className="filter-input bg-[#141414] text-white border-[#262626] rounded-lg h-[40px] px-3"
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+          >
+            <option value="all">Svi statusi</option>
+            <option value="PENDING">Na čekanju</option>
+            <option value="CONFIRMED">Potvrđeno</option>
+            <option value="REJECTED">Odbijeno</option>
+          </select>
+        </FilterBar>
+      </div>
 
-      <DataTable
-        data={paginatedData}
-        columns={columns}
-        onEdit={(row) => setFormData(row)}
-        onConfirm={(row) => handleConfirm(row.id)}
-        onReject={(row) => handleReject(row.id)}
-        className="data-table"
-      />
+      <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl overflow-hidden shadow-2xl">
+        {loading ? (
+          <div className="p-10 text-center text-gray-500">Učitavanje...</div>
+        ) : (
+          <DataTable
+            data={paginatedData}
+            columns={columns}
+            onEdit={(row) => setFormData({ ...row })}
+            onConfirm={(row) => updateStatusAction(row.id, "confirm")}
+            onReject={(row) => updateStatusAction(row.id, "reject")}
+            className="data-table"
+          />
+        )}
+      </div>
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        itemsPerPage={itemsPerPage}
-        totalItems={filteredData.length}
-      />
+      <div className="flex justify-center pt-2">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(filteredData.length / itemsPerPage) || 1}
+          onPageChange={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          totalItems={filteredData.length}
+        />
+      </div>
 
       <Modal
         isOpen={!!formData}
         onClose={() => setFormData(null)}
-        title={formData?.id ? "Uredi rezervaciju" : "Nova rezervacija"}
+        title="Uredi rezervaciju"
         footer={
-          <div className="modal-footer-actions">
+          <div className="flex gap-3 justify-end w-full border-t border-[#262626] pt-4 mt-4">
             <button className="btn-secondary" onClick={() => setFormData(null)}>
               Odustani
             </button>
-            <button className="btn-primary" onClick={handleSave}>
-              Spremi
+            <button className="btn-primary px-6" onClick={handleSave}>
+              Spremi promjene
             </button>
           </div>
         }
       >
         {formData && (
-          <div className="form-vertical-layout">
-            <div className="form-grid-two-columns">
-              <div className="form-group">
-                <label>Ime</label>
+          <div className="space-y-5 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Dolazak
+                </label>
                 <input
-                  className="input-field"
-                  placeholder="Ime"
-                  value={formData.user?.firstName || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      user: { ...formData.user!, firstName: e.target.value },
-                    })
-                  }
-                />
-              </div>
-              <div className="form-group">
-                <label>Prezime</label>
-                <input
-                  className="input-field"
-                  placeholder="Prezime"
-                  value={formData.user?.lastName || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      user: { ...formData.user!, lastName: e.target.value },
-                    })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="form-grid-two-columns">
-              <div className="form-group">
-                <label>Dolazak</label>
-                <input
-                  className="input-field"
                   type="date"
+                  className="input-field"
                   value={formData.dateFrom || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, dateFrom: e.target.value })
                   }
                 />
               </div>
-              <div className="form-group">
-                <label>Odlazak</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Odlazak
+                </label>
                 <input
-                  className="input-field"
                   type="date"
+                  className="input-field"
                   value={formData.dateTo || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, dateTo: e.target.value })
                   }
                 />
               </div>
-            </div>
-
-            <div className="form-group">
-              <label>Status</label>
-              <select
-                className="input-field"
-                value={formData.status}
-                onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value as any })
-                }
-              >
-                <option value="PENDING">na čekanju</option>
-                <option value="CONFIRMED">potvrđeno</option>
-                <option value="REJECTED">odbijeno</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Ukupni iznos (€)</label>
-              <input
-                className="input-field"
-                type="number"
-                value={formData.totalPrice || 0}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    totalPrice: Number(e.target.value),
-                  })
-                }
-              />
             </div>
           </div>
         )}

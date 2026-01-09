@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { DataTable, Column } from "../../../components/DataTable";
 import { Pagination } from "../../../components/Pagination";
 import { FilterBar } from "../../../components/FilterBar";
@@ -9,53 +10,128 @@ import { Plus } from "lucide-react";
 
 interface Room {
   id: number;
-  roomNumber: string;
+  roomNumber: number;
   floor: number;
   isCleaned: boolean;
   underMaintenance: boolean;
   categoryId: number;
+  categoryName?: string;
 }
 
+const getErrorMessage = async (response: Response) => {
+  if (response.status === 401) return "❌ Niste prijavljeni.";
+  if (response.status === 403) return "⛔ Nemate ovlasti.";
+  try {
+    const data = await response.json();
+    return data?.message || "⚠️ Greška na serveru.";
+  } catch {
+    return "⚠️ Pogreška.";
+  }
+};
+
 export default function RoomsPage() {
+  const pathname = usePathname();
+  const apiBase = pathname.startsWith("/admin") ? "/api/admin" : "/api/staff";
+
   const [rooms, setRooms] = useState<Room[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState<Partial<Room> | null>(null);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const fetchRooms = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${apiBase}/rooms?t=${Date.now()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setRooms(Array.isArray(data) ? data : []);
+      } else {
+        setMessage(await getErrorMessage(response));
+      }
+    } catch {
+      setMessage("⚠️ Veza odbijena.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!formData) return;
+    const isNew = !formData.id;
+    const url = isNew ? `${apiBase}/rooms` : `${apiBase}/rooms/${formData.id}`;
+    const method = isNew ? "POST" : "PATCH";
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomNumber: Number(formData.roomNumber),
+          floor: Number(formData.floor),
+          isCleaned: formData.isCleaned === true,
+          underMaintenance: formData.underMaintenance === true,
+          categoryId: Number(formData.categoryId),
+        }),
+      });
+
+      if (response.ok) {
+        await fetchRooms();
+        setFormData(null);
+        setMessage("✅ Soba spremljena!");
+        setTimeout(() => setMessage(""), 3000);
+      } else {
+        setMessage(await getErrorMessage(response));
+      }
+    } catch {
+      setMessage("⚠️ Greška pri spremanju.");
+    }
+  };
+
+  const handleDelete = async (row: Room) => {
+    if (!confirm(`Obriši sobu ${row.roomNumber}?`)) return;
+    try {
+      const response = await fetch(`${apiBase}/rooms/${row.id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setRooms(rooms.filter((r) => r.id !== row.id));
+        setMessage("✅ Soba obrisana.");
+        setTimeout(() => setMessage(""), 3000);
+      } else {
+        setMessage(await getErrorMessage(response));
+      }
+    } catch {
+      setMessage("⚠️ Greška.");
+    }
+  };
 
   const filteredData = rooms.filter((r) =>
     r.roomNumber.toString().includes(searchTerm)
   );
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
   const paginatedData = filteredData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const handleSave = () => {
-    if (formData) {
-      if (formData.id) {
-        setRooms(
-          rooms.map((r) => (r.id === formData.id ? (formData as Room) : r))
-        );
-      } else {
-        const newRoom = { ...formData, id: Date.now() } as Room;
-        setRooms([newRoom, ...rooms]);
-      }
-      setFormData(null);
-    }
-  };
-
   const columns: Column<Room>[] = [
     { key: "roomNumber", label: "Broj sobe", sortable: true },
     { key: "floor", label: "Kat", sortable: true },
+    { key: "categoryName", label: "Kategorija" },
     {
       key: "isCleaned",
       label: "Čišćenje",
       render: (v) => (
-        <span className={`status-badge ${v ? "confirmed" : "pending"}`}>
+        <span
+          className={`status-badge ${v ? "badge-confirmed" : "badge-pending"}`}
+        >
           {v ? "Čisto" : "Prljavo"}
         </span>
       ),
@@ -64,7 +140,9 @@ export default function RoomsPage() {
       key: "underMaintenance",
       label: "Održavanje",
       render: (v) => (
-        <span className={`status-badge ${v ? "rejected" : "confirmed"}`}>
+        <span
+          className={`status-badge ${v ? "badge-rejected" : "badge-confirmed"}`}
+        >
           {v ? "Kvar" : "Ispravno"}
         </span>
       ),
@@ -72,96 +150,125 @@ export default function RoomsPage() {
   ];
 
   return (
-    <div className="dashboard-main">
-      <div className="page-header">
-        <h1 className="page-title">Upravljanje sobama</h1>
+    <div className="dashboard-main p-6 space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#262626] pb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            Upravljanje sobama
+          </h1>
+          {message && (
+            <p
+              className={`text-xs mt-2 font-medium ${
+                message.includes("✅") ? "text-emerald-400" : "text-red-400"
+              }`}
+            >
+              {message}
+            </p>
+          )}
+        </div>
         <button
           className="btn-primary"
           onClick={() =>
             setFormData({
-              roomNumber: "",
-              floor: 1,
+              roomNumber: 0,
+              floor: 0,
               isCleaned: true,
               underMaintenance: false,
               categoryId: 1,
             })
           }
         >
-          <Plus className="icon-small" /> Dodaj sobu
+          <Plus className="w-4 h-4 mr-2" /> Dodaj sobu
         </button>
       </div>
 
-      <FilterBar
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Pretraži po broju sobe..."
-      />
+      <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl p-4">
+        <FilterBar
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Pretraži po broju sobe..."
+        />
+      </div>
 
-      <DataTable
-        data={paginatedData}
-        columns={columns}
-        onEdit={(row) => setFormData(row)}
-        onDelete={(row) => {
-          if (confirm(`Obriši sobu ${row.roomNumber}?`)) {
-            setRooms(rooms.filter((r) => r.id !== row.id));
-          }
-        }}
-        className="data-table"
-      />
+      <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl overflow-hidden shadow-2xl">
+        {loading ? (
+          <div className="p-10 text-center text-gray-500">Učitavanje...</div>
+        ) : (
+          <DataTable
+            data={paginatedData}
+            columns={columns}
+            onEdit={setFormData}
+            onDelete={handleDelete}
+            className="data-table"
+          />
+        )}
+      </div>
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        itemsPerPage={itemsPerPage}
-        totalItems={filteredData.length}
-      />
+      <div className="flex justify-center pt-2">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(filteredData.length / itemsPerPage) || 1}
+          onPageChange={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          totalItems={filteredData.length}
+        />
+      </div>
 
       <Modal
         isOpen={!!formData}
         onClose={() => setFormData(null)}
         title={formData?.id ? "Uredi sobu" : "Nova soba"}
         footer={
-          <div className="modal-footer-actions">
+          <div className="flex gap-3 justify-end w-full border-t border-[#262626] pt-4 mt-4">
             <button className="btn-secondary" onClick={() => setFormData(null)}>
               Odustani
             </button>
-            <button className="btn-primary" onClick={handleSave}>
+            <button className="btn-primary px-6" onClick={handleSave}>
               Spremi
             </button>
           </div>
         }
       >
         {formData && (
-          <div className="form-vertical-layout">
-            <div className="form-group">
-              <label>Broj sobe</label>
+          <div className="space-y-4 py-2">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Broj sobe
+              </label>
               <input
                 className="input-field"
+                type="number"
                 value={formData.roomNumber || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, roomNumber: e.target.value })
+                  setFormData({
+                    ...formData,
+                    roomNumber: Number(e.target.value),
+                  })
                 }
               />
             </div>
-            <div className="form-grid-two-columns">
-              <div className="form-group">
-                <label>Kat</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Kat
+                </label>
                 <input
-                  type="number"
                   className="input-field"
-                  value={formData.floor || 0}
+                  type="number"
+                  value={formData.floor || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, floor: Number(e.target.value) })
                   }
                 />
               </div>
-              <div className="form-group">
-                <label>Kategorija (ID)</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  ID Kategorije
+                </label>
                 <input
-                  type="number"
                   className="input-field"
-                  value={formData.categoryId || 1}
+                  type="number"
+                  value={formData.categoryId || ""}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
@@ -171,9 +278,11 @@ export default function RoomsPage() {
                 />
               </div>
             </div>
-            <div className="form-grid-two-columns">
-              <div className="form-group">
-                <label>Status čišćenja</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Čišćenje
+                </label>
                 <select
                   className="input-field"
                   value={formData.isCleaned ? "true" : "false"}
@@ -188,8 +297,10 @@ export default function RoomsPage() {
                   <option value="false">Prljavo</option>
                 </select>
               </div>
-              <div className="form-group">
-                <label>Održavanje</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Održavanje
+                </label>
                 <select
                   className="input-field"
                   value={formData.underMaintenance ? "true" : "false"}
@@ -201,7 +312,7 @@ export default function RoomsPage() {
                   }
                 >
                   <option value="false">Ispravno</option>
-                  <option value="true">U kvaru</option>
+                  <option value="true">Kvar / Popravak</option>
                 </select>
               </div>
             </div>
