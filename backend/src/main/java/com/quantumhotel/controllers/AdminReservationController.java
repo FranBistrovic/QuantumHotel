@@ -1,5 +1,6 @@
 package com.quantumhotel.controllers;
-
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 
 
 import com.quantumhotel.controllers.dto.ReservationDetailsDTO;
@@ -35,17 +36,30 @@ public class AdminReservationController {
     @PostMapping("/{id}/confirm")
     public void confirm(
             @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails principal
+            Authentication authentication
     ) {
-        reservationService.confirm(id, principal.getUsername());
+        reservationService.confirm(id, extractUsername(authentication));
     }
 
     @PostMapping("/{id}/reject")
     public void reject(
             @PathVariable Long id,
             @RequestParam(required = false) String reason,
-            @AuthenticationPrincipal UserDetails principal
+            Authentication authentication
     ) {
-        reservationService.reject(id, principal.getUsername(), reason);
+        reservationService.reject(id, extractUsername(authentication), reason);
+    }
+    private String extractUsername(Authentication authentication) {
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails userDetails) {
+            return userDetails.getUsername(); // normal login
+        }
+
+        if (principal instanceof OAuth2User oauth2User) {
+            return oauth2User.getAttribute("email"); // Google OAuth2
+        }
+
+        throw new IllegalStateException("Unsupported principal type: " + principal.getClass());
     }
 }
