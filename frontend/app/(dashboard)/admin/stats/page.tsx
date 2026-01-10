@@ -23,7 +23,7 @@ import {
   Pie,
 } from "recharts";
 
-const API_BASE_URL = "http://localhost:8080/api/admin/statistics";
+const API_BASE_URL = "http://localhost:8080/api/statistics";
 
 export default function StatsPage() {
   const [dataReservations, setDataReservations] = useState([]);
@@ -52,41 +52,62 @@ export default function StatsPage() {
 
   const fetchStatistics = async () => {
     setLoading(true);
+    setMessage("");
+
     try {
       const res = await fetch(
         `${API_BASE_URL}?startDate=${startDate}&endDate=${endDate}`,
         {
+          method: "GET",
+          credentials: "include",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
           },
         }
       );
 
-      if (res.ok) {
-        const data = await res.json();
-        setDataReservations(data.monthlyData || []);
-
-        const mappedStatus = (data.statusData || []).map((item: any) => ({
-          ...item,
-          color: COLORS[item.name as keyof typeof COLORS] || "#444",
-        }));
-        setDataStatus(mappedStatus);
-
-        setTotals({
-          occupancy: data.totals?.occupancy || "0%",
-          monthlyProfit: `${data.totals?.monthlyProfit || 0} €`,
-          newReservations: data.totals?.newReservations || 0,
-          totalProfit: `${data.totals?.totalProfit || 0} €`,
-        });
-      } else {
-        setMessage("⚠️ Greška pri dohvaćanju statistike.");
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("API ERROR:", res.status, errorText);
+        setMessage(`⚠️ Greška (${res.status}) pri dohvaćanju statistike.`);
+        return;
       }
+
+      const data = await res.json();
+
+      setDataReservations([]);
+
+      const statusData = [
+        { name: "CONFIRMED", value: data.completedReservations },
+        { name: "REJECTED", value: data.cancelledReservations },
+        {
+          name: "PENDING",
+          value:
+            data.totalReservations -
+            data.completedReservations -
+            data.cancelledReservations,
+        },
+      ].filter(s => s.value > 0).map(s => ({
+        ...s,
+        color: COLORS[s.name as keyof typeof COLORS],
+      }));
+
+      setDataStatus(statusData);
+
+      setTotals({
+        occupancy: `${data.completedReservations}/${data.totalReservations}`,
+        monthlyProfit: `${data.totalRevenue ?? 0} €`,
+        newReservations: data.totalReservations ?? 0,
+        totalProfit: `${data.totalRevenue ?? 0} €`,
+      });
     } catch (err) {
+      console.error(err);
       setMessage("⚠️ Veza sa serverom nije uspjela.");
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleExport = (format: string) => {
     const url = `${API_BASE_URL}/export/${format}?startDate=${startDate}&endDate=${endDate}`;
