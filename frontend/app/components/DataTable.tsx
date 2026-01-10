@@ -17,6 +17,7 @@ interface DataTableProps<T> {
   onDelete?: (row: T) => void;
   onConfirm?: (row: T) => void;
   onReject?: (row: T) => void;
+  onRowClick?: (row: T) => void;
   actions?: boolean;
   className?: string;
 }
@@ -28,6 +29,7 @@ export function DataTable<T extends { id: string | number }>({
   onDelete,
   onConfirm,
   onReject,
+  onRowClick,
   actions = true,
   className = "",
 }: DataTableProps<T>) {
@@ -86,7 +88,10 @@ export function DataTable<T extends { id: string | number }>({
       </thead>
       <tbody>
         {sortedData.map((row, idx) => (
-          <tr key={row.id} className={idx % 2 === 0 ? "row-even" : ""}>
+          <tr key={row.id} className={idx % 2 === 0 ? "row-even" : ""}
+          onClick={() => onRowClick && onRowClick(row)} // <-- klik na cijeli redak
+          style={{ cursor: onRowClick ? "pointer" : "default" }}
+          >
             {columns.map((col) => (
               <td key={String(col.key)} data-label={col.label}>
                 {col.render
@@ -106,7 +111,7 @@ export function DataTable<T extends { id: string | number }>({
                   {onConfirm && (
                     <button
                       className="btn-edit"
-                      onClick={() => onConfirm(row)}
+                      onClick={(e) => { e.stopPropagation(); onConfirm(row); }}
                       title="Potvrdi"
                     >
                       <Check size={18} />
@@ -115,7 +120,7 @@ export function DataTable<T extends { id: string | number }>({
                   {onReject && (
                     <button
                       className="btn-delete"
-                      onClick={() => onReject(row)}
+                      onClick={(e) => { e.stopPropagation(); onReject(row); }}
                       title="Odbij"
                     >
                       <X size={18} />
@@ -124,7 +129,7 @@ export function DataTable<T extends { id: string | number }>({
                   {onEdit && (
                     <button
                       className="btn-edit"
-                      onClick={() => onEdit(row)}
+                      onClick={(e) => { e.stopPropagation(); onEdit(row); }} 
                       title="Uredi"
                     >
                       <Edit2 size={18} />
@@ -133,7 +138,7 @@ export function DataTable<T extends { id: string | number }>({
                   {onDelete && (
                     <button
                       className="btn-delete"
-                      onClick={() => onDelete(row)}
+                      onClick={(e) => { e.stopPropagation(); onDelete(row); }}
                       title="Obriši"
                     >
                       <Trash2 size={18} />
