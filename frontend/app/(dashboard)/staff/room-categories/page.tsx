@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
 import { DataTable, Column } from "../../../components/DataTable";
 import { Pagination } from "../../../components/Pagination";
 import { FilterBar } from "../../../components/FilterBar";
@@ -26,12 +25,11 @@ const getErrorMessage = async (response: Response) => {
     const data = await response.json();
     return data?.message || "⚠️ Greška.";
   } catch {
-    return "⚠️ Pogreška.";
+    return "⚠️ Greška.";
   }
 };
 
 export default function RoomCategoriesPage() {
-  const pathname = usePathname();
   const apiBase = "/api";
 
   const [categories, setCategories] = useState<RoomCategory[]>([]);
@@ -68,6 +66,7 @@ export default function RoomCategoriesPage() {
 
   const handleSave = async () => {
     if (!formData) return;
+
     const isNew = !formData.id;
     const url = isNew
       ? `${apiBase}/room-categories`
@@ -128,6 +127,7 @@ export default function RoomCategoriesPage() {
   );
 
   const columns: Column<RoomCategory>[] = [
+    { key: "id", label: "ID", sortable: true },
     { key: "name", label: "Naziv kategorije", sortable: true },
     { key: "capacity", label: "Kapacitet", render: (v) => `${v} osobe` },
     {
@@ -204,7 +204,7 @@ export default function RoomCategoriesPage() {
           <DataTable
             data={paginatedData}
             columns={columns}
-            onEdit={setFormData}
+            onEdit={(row) => setFormData({ ...row })}
             onDelete={handleDelete}
             className="data-table"
           />
@@ -228,6 +228,10 @@ export default function RoomCategoriesPage() {
       >
         {formData && (
           <div className="space-y-4 py-2">
+            {formData.id && (
+              <div className="text-xs text-gray-400">ID: {formData.id}</div>
+            )}
+
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Naziv kategorije
@@ -240,6 +244,7 @@ export default function RoomCategoriesPage() {
                 }
               />
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
@@ -254,6 +259,7 @@ export default function RoomCategoriesPage() {
                   }
                 />
               </div>
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                   Kapacitet
@@ -271,6 +277,7 @@ export default function RoomCategoriesPage() {
                 />
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
@@ -286,6 +293,7 @@ export default function RoomCategoriesPage() {
                   }
                 />
               </div>
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                   Check-Out
@@ -301,6 +309,7 @@ export default function RoomCategoriesPage() {
                 />
               </div>
             </div>
+
             <div className="flex items-center gap-3 bg-[#141414] p-3 rounded-lg border border-[#262626]">
               <input
                 type="checkbox"
@@ -314,6 +323,7 @@ export default function RoomCategoriesPage() {
                 Odvojeni kreveti (Twin Beds)
               </label>
             </div>
+
             <div className="flex gap-3 justify-end w-full border-t border-[#262626] pt-4 mt-4">
               <button
                 className="btn-secondary"

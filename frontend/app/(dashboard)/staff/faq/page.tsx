@@ -1,17 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
 import { DataTable, Column } from "../../../components/DataTable";
 import { Pagination } from "../../../components/Pagination";
 import { FilterBar } from "../../../components/FilterBar";
 import { Modal } from "../../../components/Modal";
-import { Plus, HelpCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 
 interface FAQ {
   id: number;
-  question: string;
-  answer: string;
+  title: string; // Pitanje
+  description: string; // Odgovor
 }
 
 const getErrorMessage = async (response: Response) => {
@@ -26,7 +25,7 @@ const getErrorMessage = async (response: Response) => {
 };
 
 export default function FaqPage() {
-  const apiBase = "/api";
+  const apiBase = "/api/faq";
 
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,10 +43,17 @@ export default function FaqPage() {
   const fetchFaqs = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${apiBase}/faq?t=${Date.now()}`);
+      const response = await fetch(`${apiBase}?t=${Date.now()}`);
       if (response.ok) {
         const data = await response.json();
-        setFaqs(Array.isArray(data) ? data : []);
+        const mappedData = Array.isArray(data)
+          ? data.map((item: any) => ({
+              id: item.id,
+              title: item.question || item.title || "",
+              description: item.answer || item.description || "",
+            }))
+          : [];
+        setFaqs(mappedData);
       } else {
         setMessage(await getErrorMessage(response));
       }
@@ -59,9 +65,13 @@ export default function FaqPage() {
   };
 
   const handleSave = async () => {
-    if (!formData) return;
-    const isNew = !formData.id;
-    const url = isNew ? `${apiBase}/faq` : `${apiBase}/faq/${formData.id}`;
+    if (!formData?.title || !formData?.description) {
+      setMessage("❌ Unesite i pitanje i odgovor.");
+      return;
+    }
+
+    const isNew = !formData.id || formData.id === 0;
+    const url = isNew ? apiBase : `${apiBase}/${formData.id}`;
     const method = isNew ? "POST" : "PATCH";
 
     try {
@@ -69,15 +79,15 @@ export default function FaqPage() {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question: formData.question,
-          answer: formData.answer,
+          question: formData.title,
+          answer: formData.description,
         }),
       });
 
       if (response.ok) {
-        await fetchFaqs(); // Sinkronizacija s backendom
+        await fetchFaqs();
         setFormData(null);
-        setMessage("✅ FAQ uspješno spremljen!");
+        setMessage("✅ FAQ spremljen!");
         setTimeout(() => setMessage(""), 3000);
       } else {
         setMessage(await getErrorMessage(response));
@@ -90,12 +100,12 @@ export default function FaqPage() {
   const handleDelete = async (row: FAQ) => {
     if (!confirm("Obrisati ovo pitanje?")) return;
     try {
-      const response = await fetch(`${apiBase}/faq/${row.id}`, {
+      const response = await fetch(`${apiBase}/${row.id}`, {
         method: "DELETE",
       });
       if (response.ok) {
         setFaqs(faqs.filter((f) => f.id !== row.id));
-        setMessage("✅ Pitanje obrisano.");
+        setMessage("✅ FAQ obrisan!");
         setTimeout(() => setMessage(""), 3000);
       } else {
         setMessage(await getErrorMessage(response));
@@ -106,9 +116,9 @@ export default function FaqPage() {
   };
 
   const filteredData = faqs.filter(
-    (faq) =>
-      faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
+    (f) =>
+      f.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      f.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const paginatedData = filteredData.slice(
@@ -117,31 +127,14 @@ export default function FaqPage() {
   );
 
   const columns: Column<FAQ>[] = [
+    { key: "id", label: "ID", sortable: true },
+    { key: "title", label: "Pitanje", sortable: true },
     {
-      key: "id",
-      label: "ID",
-      sortable: true,
-      render: (v) => (
-        <span className="font-mono text-gray-500 text-xs">{v}</span>
-      ),
-    },
-    {
-      key: "question",
-      label: "Pitanje",
-      sortable: true,
-      render: (v) => (
-        <div className="flex items-center gap-2">
-          <HelpCircle className="w-4 h-4 text-amber-400 opacity-70" />
-          <span className="font-medium text-white">{v}</span>
-        </div>
-      ),
-    },
-    {
-      key: "answer",
+      key: "description",
       label: "Odgovor",
       render: (v) => (
         <span className="text-gray-400 text-sm">
-          {v.length > 70 ? v.substring(0, 70) + "..." : v}
+          {v && v.length > 70 ? v.substring(0, 70) + "..." : v}
         </span>
       ),
     },
@@ -165,8 +158,8 @@ export default function FaqPage() {
           )}
         </div>
         <button
-          onClick={() => setFormData({ question: "", answer: "" })}
           className="btn-primary"
+          onClick={() => setFormData({ title: "", description: "" })}
         >
           <Plus className="w-4 h-4 mr-2" /> Dodaj pitanje
         </button>
@@ -175,11 +168,8 @@ export default function FaqPage() {
       <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl p-4">
         <FilterBar
           searchValue={searchTerm}
-          onSearchChange={(v) => {
-            setSearchTerm(v);
-            setCurrentPage(1);
-          }}
-          searchPlaceholder="Pretraži pitanja ili odgovore..."
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Pretraži FAQ..."
         />
       </div>
 
@@ -212,7 +202,7 @@ export default function FaqPage() {
       <Modal
         isOpen={!!formData}
         onClose={() => setFormData(null)}
-        title={formData?.id ? "Uredi pitanje" : "Novo FAQ pitanje"}
+        title={formData?.id ? "Uredi FAQ" : "Novi FAQ"}
         footer={
           <div className="flex gap-3 justify-end w-full border-t border-[#262626] pt-4 mt-4">
             <button className="btn-secondary" onClick={() => setFormData(null)}>
@@ -232,10 +222,9 @@ export default function FaqPage() {
               </label>
               <input
                 className="input-field"
-                placeholder="npr. Koliko košta parking?"
-                value={formData.question || ""}
+                value={formData.title || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, question: e.target.value })
+                  setFormData({ ...formData, title: e.target.value })
                 }
               />
             </div>
@@ -245,11 +234,9 @@ export default function FaqPage() {
               </label>
               <textarea
                 className="input-field min-h-[150px]"
-                style={{ resize: "vertical" }}
-                placeholder="Unesite detaljan odgovor..."
-                value={formData.answer || ""}
+                value={formData.description || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, answer: e.target.value })
+                  setFormData({ ...formData, description: e.target.value })
                 }
               />
             </div>
