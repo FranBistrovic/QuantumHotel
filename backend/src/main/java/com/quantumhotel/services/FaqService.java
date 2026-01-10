@@ -72,8 +72,8 @@ public class FaqService {
     private FaqResponse mapToResponse(Faq faq) {
         FaqResponse response = new FaqResponse();
         response.setId(faq.getId());
-        response.setTitle(faq.getQuestion());
-        response.setDescription(faq.getAnswer());
+        response.setQuestion(faq.getQuestion());
+        response.setAnswer(faq.getAnswer());
         response.setCreated(faq.getCreatedAt() != null ? faq.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() : null);
         response.setEdited(faq.getEditedAt() != null ? faq.getEditedAt().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime() : null);
         return response;

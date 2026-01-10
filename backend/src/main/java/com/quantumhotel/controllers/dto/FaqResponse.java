@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 public class FaqResponse {
 
     private Long id;
-    private String title;
-    private String description;
+    private String question;
+    private String answer;
     private LocalDateTime created;
     private LocalDateTime edited;
 

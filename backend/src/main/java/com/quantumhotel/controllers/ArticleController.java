@@ -36,7 +36,7 @@ public class ArticleController {
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     public ArticleResponse create(@RequestBody ArticleRequest request,
                                   @AuthenticationPrincipal UserDetails principal) {
-        return articleService.create(request, principal.getUsername());
+        return articleService.create(request, principal.getUsername()); // TODO: Fix principal being null if logged in with OAUTH2
     }
 
     @PatchMapping("/{id}")

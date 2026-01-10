@@ -30,7 +30,7 @@ public class FaqController {
     @PostMapping
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     public FaqResponse create(@RequestBody FaqRequest request,
-                              @AuthenticationPrincipal UserDetails principal) {
+                              @AuthenticationPrincipal UserDetails principal) { // TODO: Fix principal being null if logged in with OAUTH2
         return faqService.create(request, principal.getUsername());
     }
 
