@@ -7,6 +7,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+
 
 import java.util.List;
 
@@ -30,22 +33,37 @@ public class FaqController {
     @PostMapping
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     public FaqResponse create(@RequestBody FaqRequest request,
-                              @AuthenticationPrincipal UserDetails principal) { // TODO: Fix principal being null if logged in with OAUTH2
-        return faqService.create(request, principal.getUsername());
+                              Authentication authentication) {
+        return faqService.create(request, extractUsername(authentication));
     }
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     public FaqResponse update(@PathVariable Long id,
                               @RequestBody FaqRequest request,
-                              @AuthenticationPrincipal UserDetails principal) {
-        return faqService.update(id, request, principal.getUsername());
+                              Authentication authentication) {
+        return faqService.update(id, request, extractUsername(authentication));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     public void delete(@PathVariable Long id,
-                       @AuthenticationPrincipal UserDetails principal) {
-        faqService.delete(id, principal.getUsername());
+                       Authentication authentication) {
+        faqService.delete(id, extractUsername(authentication));
+    }
+
+    private String extractUsername(Authentication authentication) {
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails userDetails) {
+            return userDetails.getUsername(); // normal login
+        }
+
+        if (principal instanceof OAuth2User oauth2User) {
+            return oauth2User.getAttribute("email"); // Google OAuth2
+        }
+
+        throw new IllegalStateException("Unsupported principal type: " + principal.getClass());
     }
 }
+
