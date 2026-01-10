@@ -29,6 +29,16 @@ export default function RootLayout({
 }) {
   const [user, setUser] = useState<any>(null);
 
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    username: "",
+  });
+
+
   useEffect(() => {
     fetch("/api/users/me", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
@@ -43,6 +53,83 @@ export default function RootLayout({
     });
     window.location.href = "/";
   };
+
+
+  const openEditProfile = () => {
+    if (!user) return;
+  
+    setForm({
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.email || "",
+      username: user.username || "",
+    });
+  
+    setIsEditing(true);
+  };
+  
+  const handleEditProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+  
+    const body: any = {};
+  
+    if (form.firstName !== user.firstName) body.firstName = form.firstName;
+    if (form.lastName !== user.lastName) body.lastName = form.lastName;
+    if (form.email !== user.email) body.email = form.email;
+    if (form.username !== user.username) body.username = form.username;
+  
+    if (Object.keys(body).length === 0) {
+      setIsEditing(false);
+      return;
+    }
+  
+    const res = await fetch("/api/users/me", {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  
+    if (res.status === 409) {
+      alert("Email ili korisničko ime već postoji.");
+      return;
+    }
+  
+    if (!res.ok) {
+      alert("Greška prilikom ažuriranja profila.");
+      return;
+    }
+  
+    const updated = await res.json();
+    setUser(updated);
+    setIsEditing(false);
+    alert("Profil je uspješno ažuriran.");
+  };
+  
+  
+
+
+  const handleDeleteAccount = async () => {
+    if (!confirm("⚠️ Želite li trajno obrisati račun? Ova akcija je nepovratna.")) return;
+  
+    const res = await fetch("/api/users/me", {
+      method: "DELETE",
+      credentials: "include",
+    });
+  
+    if (res.status === 204) {
+      window.location.href = "/";
+      return;
+    }
+  
+    alert("Došlo je do greške prilikom brisanja računa.");
+  };
+  
+
+
+
+
 
   return (
     <html lang="en">
@@ -125,6 +212,26 @@ export default function RootLayout({
                 >
                   🚪 Odjava
                 </button>
+
+              
+
+
+                <button
+                  onClick={openEditProfile}
+                  className="text-[#d5a853] hover:text-white cursor-pointer transition"
+                >
+                  ✏️ Uredi profil
+                </button>
+
+
+                <button
+                  onClick={handleDeleteAccount}
+                  className="text-[#d5a853] hover:text-white cursor-pointer transition"
+                >
+                  🗑️ Obriši račun
+                </button> 
+
+
               </div>
             )}
           </nav>
@@ -132,6 +239,76 @@ export default function RootLayout({
 
         {/* Main content */}
         <main className="flex-1 p-10">{children}</main>
+
+
+
+        {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <form onSubmit={handleEditProfile}
+          className="bg-[#46000a] p-6 rounded-xl w-[360px] shadow-xl"
+        >
+      <h2 className="text-xl font-semibold mb-4 text-center">
+        Uredi profil
+      </h2>
+
+      <input
+        className="w-full mb-3 p-2 rounded border"
+        placeholder="Ime"
+        value={form.firstName}
+        onChange={(e) =>
+          setForm({ ...form, firstName: e.target.value })
+        }
+      />
+
+      <input
+        className="w-full mb-3 p-2 rounded border"
+        placeholder="Prezime"
+        value={form.lastName}
+        onChange={(e) =>
+          setForm({ ...form, lastName: e.target.value })
+        }
+      />
+
+      <input
+        type="email"
+        className="w-full mb-3 p-2 rounded border"
+        placeholder="Email"
+        value={form.email}
+        onChange={(e) =>
+          setForm({ ...form, email: e.target.value })
+        }
+      />
+
+      <input
+        className="w-full mb-4 p-2 rounded border"
+        placeholder="Korisničko ime"
+        value={form.username}
+        onChange={(e) =>
+          setForm({ ...form, username: e.target.value })
+        }
+      />
+
+      <div className="flex justify-between">
+        <button
+          type="button"
+          onClick={() => setIsEditing(false)}
+          className="px-4 py-2 rounded bg-[#46000a] hover:bg-gray-400"
+        >
+          Odustani
+        </button>
+
+        <button
+          type="submit"
+          className="px-4 py-2 rounded bg-[#46000a] text-[#d5a853] hover:text-white"
+        >
+          Spremi
+        </button>
+      </div>
+    </form>
+  </div>
+)}
+
+
       </body>
     </html>
   );
