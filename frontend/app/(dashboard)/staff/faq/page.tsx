@@ -26,8 +26,7 @@ const getErrorMessage = async (response: Response) => {
 };
 
 export default function FaqPage() {
-  const pathname = usePathname();
-  const apiBase = pathname.startsWith("/admin") ? "/api/admin" : "/api/staff";
+  const apiBase = "/api";
 
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [searchTerm, setSearchTerm] = useState("");

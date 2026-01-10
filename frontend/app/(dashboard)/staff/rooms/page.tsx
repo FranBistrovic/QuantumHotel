@@ -31,7 +31,7 @@ const getErrorMessage = async (response: Response) => {
 
 export default function RoomsPage() {
   const pathname = usePathname();
-  const apiBase = pathname.startsWith("/admin") ? "/api/admin" : "/api/staff";
+  const apiBase = "/api";
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [searchTerm, setSearchTerm] = useState("");

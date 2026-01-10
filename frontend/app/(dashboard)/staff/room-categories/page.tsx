@@ -32,7 +32,7 @@ const getErrorMessage = async (response: Response) => {
 
 export default function RoomCategoriesPage() {
   const pathname = usePathname();
-  const apiBase = pathname.startsWith("/admin") ? "/api/admin" : "/api/staff";
+  const apiBase = "/api";
 
   const [categories, setCategories] = useState<RoomCategory[]>([]);
   const [searchTerm, setSearchTerm] = useState("");

@@ -26,8 +26,7 @@ const getErrorMessage = async (response: Response) => {
 };
 
 export default function ArticlesPage() {
-  const pathname = usePathname();
-  const apiBase = pathname.startsWith("/admin") ? "/api/admin" : "/api/staff";
+  const apiBase = "/api";
 
   const [articles, setArticles] = useState<Article[]>([]);
   const [searchTerm, setSearchTerm] = useState("");

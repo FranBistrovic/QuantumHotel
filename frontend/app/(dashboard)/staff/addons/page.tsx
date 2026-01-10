@@ -27,8 +27,7 @@ const getErrorMessage = async (response: Response) => {
 };
 
 export default function AddonsPage() {
-  const pathname = usePathname();
-  const apiBase = pathname.startsWith("/admin") ? "/api/admin" : "/api/staff";
+  const apiBase = "/api";
 
   const [addons, setAddons] = useState<Addon[]>([]);
   const [searchTerm, setSearchTerm] = useState("");

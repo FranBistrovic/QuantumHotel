@@ -43,8 +43,7 @@ const getErrorMessage = async (response: Response) => {
 };
 
 export default function StaffReservationsPage() {
-  const pathname = usePathname();
-  const apiBase = pathname.startsWith("/admin") ? "/api/admin" : "/api/staff";
+  const apiBase = "/api/admin" ;
 
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
