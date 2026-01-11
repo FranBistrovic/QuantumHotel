@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -23,6 +24,14 @@ public class AccommodationCategoryController {
     @GetMapping("/{id}")
     public AccommodationCategoryDTO getById(@PathVariable Long id) {
         return categoryService.getById(id);
+    }
+
+    @GetMapping("/available")
+    public List<AccommodationCategoryDTO> getAvailable(
+            @RequestParam LocalDate from,
+            @RequestParam LocalDate to,
+            @RequestParam Integer persons) {
+        return categoryService.getAvailableCategories(from, to, persons);
     }
 
     @PostMapping
