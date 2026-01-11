@@ -9,8 +9,8 @@ import { Plus } from "lucide-react";
 
 interface FAQ {
   id: number;
-  title: string; // Pitanje
-  description: string; // Odgovor
+  question: string; // Pitanje
+  answer: string; // Odgovor
 }
 
 const getErrorMessage = async (response: Response) => {
@@ -49,8 +49,8 @@ export default function FaqPage() {
         const mappedData = Array.isArray(data)
           ? data.map((item: any) => ({
               id: item.id,
-              title: item.question || item.title || "",
-              description: item.answer || item.description || "",
+              question: item.question || "",
+              answer: item.answer || "",
             }))
           : [];
         setFaqs(mappedData);
@@ -65,7 +65,7 @@ export default function FaqPage() {
   };
 
   const handleSave = async () => {
-    if (!formData?.title || !formData?.description) {
+    if (!formData?.question || !formData?.answer) {
       setMessage("❌ Unesite i pitanje i odgovor.");
       return;
     }
@@ -79,8 +79,8 @@ export default function FaqPage() {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question: formData.title,
-          answer: formData.description,
+          question: formData.question,
+          answer: formData.answer,
         }),
       });
 
@@ -117,8 +117,8 @@ export default function FaqPage() {
 
   const filteredData = faqs.filter(
     (f) =>
-      f.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      f.description.toLowerCase().includes(searchTerm.toLowerCase())
+      f.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      f.answer.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const paginatedData = filteredData.slice(
@@ -128,9 +128,9 @@ export default function FaqPage() {
 
   const columns: Column<FAQ>[] = [
     { key: "id", label: "ID", sortable: true },
-    { key: "title", label: "Pitanje", sortable: true },
+    { key: "question", label: "Pitanje", sortable: true },
     {
-      key: "description",
+      key: "answer",
       label: "Odgovor",
       render: (v) => (
         <span className="text-gray-400 text-sm">
@@ -159,7 +159,7 @@ export default function FaqPage() {
         </div>
         <button
           className="btn-primary"
-          onClick={() => setFormData({ title: "", description: "" })}
+          onClick={() => setFormData({ question: "", answer: "" })}
         >
           <Plus className="w-4 h-4 mr-2" /> Dodaj pitanje
         </button>
@@ -222,9 +222,9 @@ export default function FaqPage() {
               </label>
               <input
                 className="input-field"
-                value={formData.title || ""}
+                value={formData.question || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
+                  setFormData({ ...formData, question: e.target.value })
                 }
               />
             </div>
@@ -234,9 +234,9 @@ export default function FaqPage() {
               </label>
               <textarea
                 className="input-field min-h-[150px]"
-                value={formData.description || ""}
+                value={formData.answer || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
+                  setFormData({ ...formData, answer: e.target.value })
                 }
               />
             </div>
