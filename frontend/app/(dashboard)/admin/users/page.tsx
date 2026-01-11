@@ -354,7 +354,7 @@ export default function UsersPage() {
                 </label>
                 <input
                   className="input-field"
-                  type="email"
+                  type="text"
                   value={formData.email || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })

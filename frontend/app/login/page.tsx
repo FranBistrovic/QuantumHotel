@@ -45,7 +45,7 @@ export default function LoginPage() {
         className="bg-white shadow-md rounded-2xl p-8 w-80 border border-[#d4af37]"
       >
         <input
-          type="email"
+          type="text"
           placeholder="Email"
           value={username}
           onChange={(e) => setEmail(e.target.value)}
@@ -86,3 +86,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

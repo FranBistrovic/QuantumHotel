@@ -28,7 +28,7 @@ export default function HomePage() {
             src="/bordo izvana hotel.png"
             alt="Hotel izvana"
             fill
-            className="object-cover rounded-2xl shadow-lg"
+            className="object-cover rounded-2xl shadow-lg hover:scale-101"
           />
         </div>
 
@@ -39,7 +39,7 @@ export default function HomePage() {
               src="/bordo soba.png"
               alt="Soba"
               fill
-              className="object-cover rounded-2xl shadow-lg"
+              className="object-cover rounded-2xl shadow-lg hover:scale-101"
             />
           </div>
           <div className="relative w-full h-[245px]">
@@ -47,7 +47,7 @@ export default function HomePage() {
               src="/bazeni.png"
               alt="Bazen"
               fill
-              className="object-cover rounded-2xl shadow-lg"
+              className="object-cover rounded-2xl shadow-lg hover:scale-101"
             />
           </div>
         </div>
