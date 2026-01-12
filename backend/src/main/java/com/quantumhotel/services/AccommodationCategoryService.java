@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,13 @@ public class AccommodationCategoryService {
                 .orElseThrow(() -> new EntityNotFoundException("Kategorija nije pronađena"));
         mapToEntity(dto, entity);
         return toDto(categoryRepository.save(entity));
+    }
+
+    public List<AccommodationCategoryDTO> getAvailableCategories(LocalDate from, LocalDate to, Integer persons) {
+        return categoryRepository.findAvailableCategories(from, to, persons)
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     public void delete(Long id) {
