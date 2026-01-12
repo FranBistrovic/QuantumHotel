@@ -23,21 +23,10 @@ interface Reservation {
   totalPrice: number;
 }
 
-interface Room {
-  id: number;
-  roomNumber: string;
-  categoryId: number;
-  capacity: number;
-}
-
-interface Addon {
+interface RoomCategory {
   id: number;
   name: string;
-}
-
-interface SelectedAddon {
-  amenityId: number;
-  quantity: number;
+  capacity: number;
 }
 
 /* ================= CONST ================= */
@@ -48,145 +37,137 @@ const statusLabels = {
   REJECTED: "odbijeno",
 };
 
+const getErrorMessage = async (response: Response) => {
+  if (response.status === 401) return "❌ Niste prijavljeni.";
+  if (response.status === 403) return "⛔ Nemate ovlasti.";
+  try {
+    const data = await response.json();
+    return data?.message || "⚠️ Greška na serveru.";
+  } catch {
+    return "⚠️ Pogreška.";
+  }
+};
+
 /* ================= PAGE ================= */
 
 export default function ReservationsPage() {
   const router = useRouter();
 
-  /* ---------------- EXISTING RESERVATIONS ---------------- */
+  /* ---------------- STATE ---------------- */
+
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const [formData, setFormData] = useState<Partial<Reservation> | null>(null);
 
-  /* ---------------- CREATE NEW RESERVATION ---------------- */
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [persons, setPersons] = useState(1);
 
-  const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [availableCategories, setAvailableCategories] = useState<RoomCategory[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<RoomCategory | null>(null);
 
-  const [addons, setAddons] = useState<Addon[]>([]);
-  const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const itemsPerPage = 10;
 
   /* ================= EFFECTS ================= */
 
   useEffect(() => {
-    fetch("/api/reservations/me")
-      .then(res => res.json())
-      .then(setReservations)
-      .catch(console.error);
+    fetchReservations();
   }, []);
 
-  useEffect(() => {
-    fetch("/api/addons")
-      .then(res => res.json())
-      .then(setAddons)
-      .catch(console.error);
-  }, []);
+  /* ================= API ================= */
 
-  /* ================= LOGIC ================= */
-
-  const fetchAvailableRooms = async () => {
-    if (!dateFrom || !dateTo) return;
-    const res = await fetch(
-      `/api/rooms/available?from=${dateFrom}&to=${dateTo}&persons=${persons}`
-    );
-    setAvailableRooms(await res.json());
-  };
-
-  const updateAddon = (addonId: number, quantity: number) => {
-    setSelectedAddons(prev => {
-      if (quantity === 0) return prev.filter(a => a.amenityId !== addonId);
-
-      const existing = prev.find(a => a.amenityId === addonId);
-      if (existing) {
-        return prev.map(a =>
-          a.amenityId === addonId ? { ...a, quantity } : a
-        );
-      }
-
-      return [...prev, { amenityId: addonId, quantity }];
-    });
-  };
-
-  const createReservation = async () => {
-    if (!selectedRoom || !dateFrom || !dateTo) return;
-
-    const res = await fetch("/api/reservations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        dateFrom,
-        dateTo,
-        categoryId: selectedRoom.categoryId,
-        amenities: selectedAddons,
-      }),
-    });
-
-    if (!res.ok) throw new Error("Greška pri rezervaciji");
-
-    const created = await res.json();
-    setReservations(prev => [created, ...prev]);
-
-    // reset
-    setAvailableRooms([]);
-    setSelectedRoom(null);
-    setSelectedAddons([]);
-    setDateFrom("");
-    setDateTo("");
-    setPersons(1);
-  };
-
-  const handleSave = async () => {
-    if (!formData) return;
-
+  const fetchReservations = async () => {
+    setLoading(true);
     try {
-      const isEdit = !!formData.id;
-
-      const res = await fetch(
-        isEdit
-          ? `/api/reservations/${formData.id}`
-          : "/api/reservations",
-        {
-          method: isEdit ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user: formData.user,
-            room: formData.room,
-            dateFrom: formData.dateFrom,
-            dateTo: formData.dateTo,
-            totalPrice: formData.totalPrice,
-          }),
-        }
-      );
-
-      if (!res.ok) throw new Error("Greška pri spremanju");
-
-      const saved = await res.json();
-      setReservations(prev =>
-        isEdit
-          ? prev.map(r => (r.id === saved.id ? saved : r))
-          : [saved, ...prev]
-      );
-
-      setFormData(null);
-    } catch (err) {
-      console.error(err);
+      const response = await fetch("/api/reservations/me");
+      if (response.ok) {
+        const data = await response.json();
+        setReservations(Array.isArray(data) ? data : []);
+      } else {
+        setMessage(await getErrorMessage(response));
+      }
+    } catch {
+      setMessage("⚠️ Greška pri dohvaćanju rezervacija.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  /* ---------------- FILTER & PAGINATION ---------------- */
+  const fetchAvailableCategories = async () => {
+    if (!dateFrom || !dateTo) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/room-categories/available?from=${dateFrom}&to=${dateTo}&persons=${persons}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableCategories(Array.isArray(data) ? data : []);
+      } else {
+        setMessage(await getErrorMessage(response));
+      }
+    } catch {
+      setMessage("⚠️ Greška pri dohvaćanju kategorija.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createReservation = async () => {
+    if (!selectedCategory || !dateFrom || !dateTo) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dateFrom,
+          dateTo,
+          categoryId: selectedCategory.id,
+          amenities: [],
+        }),
+      });
+
+      if (response.ok) {
+        const created = await response.json();
+        setReservations(prev => [created, ...prev]);
+
+        setAvailableCategories([]);
+        setSelectedCategory(null);
+        setDateFrom("");
+        setDateTo("");
+        setPersons(1);
+
+        setMessage("✅ Rezervacija uspješno kreirana.");
+        setTimeout(() => setMessage(""), 3000);
+      } else {
+        setMessage(await getErrorMessage(response));
+      }
+    } catch {
+      setMessage("⚠️ Greška pri kreiranju rezervacije.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ================= FILTER & PAGINATION ================= */
+
   const filteredData = reservations.filter(res => {
     const fullName = `${res.user?.firstName || ""} ${res.user?.lastName || ""}`.toLowerCase();
-    const matchesSearch =
-      fullName.includes(searchTerm.toLowerCase()) ||
-      res.room?.roomNumber.includes(searchTerm);
-    const matchesStatus = statusFilter === "all" || res.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const roomNum = res.room?.roomNumber?.toLowerCase() || "";
+    const search = searchTerm.toLowerCase();
+
+    return (
+      (fullName.includes(search) || roomNum.includes(search)) &&
+      (statusFilter === "all" || res.status === statusFilter)
+    );
   });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
@@ -196,11 +177,7 @@ export default function ReservationsPage() {
   );
 
   const columns: Column<Reservation>[] = [
-    {
-      label: "Soba",
-      key: "room",
-      render: room => room?.roomNumber || "Nije dodijeljena",
-    },
+    { key: "room", label: "Soba", render: r => r.room?.roomNumber || "Nije dodijeljena" },
     { key: "dateFrom", label: "Dolazak", sortable: true },
     { key: "dateTo", label: "Odlazak", sortable: true },
     {
@@ -228,97 +205,79 @@ export default function ReservationsPage() {
   ];
 
   /* ================= RENDER ================= */
+
   return (
     <div className="dashboard-main space-y-12 p-6">
+      {message && (
+        <p className="text-sm font-medium text-red-600">{message}</p>
+      )}
 
-      {/* ============ CREATE NEW RESERVATION ============ */}
+      {/* ============ CREATE RESERVATION ============ */}
       <section className="reservation-create space-y-6 p-6 border rounded shadow-sm bg-gray-100">
         <h1 className="page-title text-2xl font-bold text-black">Rezerviraj</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* OD KADA */}
           <div className="flex flex-col">
-            <label htmlFor="dateFrom" className="font-semibold mb-1 text-black">Od kada</label>
+            <label className="font-semibold mb-1 text-black">Od kada</label>
             <input
-              id="dateFrom"
               type="date"
               value={dateFrom}
               onChange={e => setDateFrom(e.target.value)}
-              className="input-field border border-gray-400 rounded p-2 bg-gray-200 text-black focus:ring-2 focus:ring-red-500"
+              className="input-field border border-gray-400 rounded p-2 bg-gray-200 text-black"
             />
           </div>
 
-          {/* DO KADA */}
           <div className="flex flex-col">
-            <label htmlFor="dateTo" className="font-semibold mb-1 text-black">Do kada</label>
+            <label className="font-semibold mb-1 text-black">Do kada</label>
             <input
-              id="dateTo"
               type="date"
               value={dateTo}
               onChange={e => setDateTo(e.target.value)}
-              className="input-field border border-gray-400 rounded p-2 bg-gray-200 text-black focus:ring-2 focus:ring-red-500"
+              className="input-field border border-gray-400 rounded p-2 bg-gray-200 text-black"
             />
           </div>
 
-          {/* BROJ OSOBA */}
           <div className="flex flex-col">
-            <label htmlFor="persons" className="font-semibold mb-1 text-black">Za koliko osoba</label>
+            <label className="font-semibold mb-1 text-black">Za koliko osoba</label>
             <input
-              id="persons"
               type="number"
               min={1}
               value={persons}
               onChange={e => setPersons(+e.target.value)}
-              className="input-field border border-gray-400 rounded p-2 bg-gray-200 text-black focus:ring-2 focus:ring-red-500"
+              className="input-field border border-gray-400 rounded p-2 bg-gray-200 text-black"
             />
           </div>
         </div>
 
         <button
-          className="btn-primary mt-4 w-full sm:w-auto bg-red-600 text-white font-medium py-2 px-4 rounded-md shadow hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={fetchAvailableRooms}
+          onClick={fetchAvailableCategories}
+          className="btn-primary bg-red-600 text-white py-2 px-4 rounded-md"
+          disabled={loading}
         >
-          Prikaži dostupne sobe
+          Prikaži dostupne kategorije
         </button>
 
-        {/* Available rooms */}
-        <div className="room-grid grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-          {availableRooms.map(room => (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {availableCategories.map(cat => (
             <div
-              key={room.id}
-              className={`room-card p-4 border rounded cursor-pointer ${
-                selectedRoom?.id === room.id
-                  ? "border-red-600 bg-gray-200 shadow-md"
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat)}
+              className={`p-4 border rounded cursor-pointer ${
+                selectedCategory?.id === cat.id
+                  ? "border-red-600 bg-gray-200"
                   : "border-gray-400 hover:border-red-500 hover:bg-gray-200"
               }`}
-              onClick={() => setSelectedRoom(room)}
             >
-              <h4 className="font-semibold text-black">Soba {room.roomNumber}</h4>
-              <p className="text-gray-800 mt-1">{room.capacity} osoba</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Add-ons */}
-        <h3 className="mt-6 mb-2 text-lg font-semibold text-black">Dodatne usluge</h3>
-        <div className="space-y-2">
-          {addons.map(addon => (
-            <div key={addon.id} className="amenity-row flex items-center justify-between p-2 border border-gray-400 rounded bg-gray-200 hover:bg-gray-300">
-              <span className="text-black">{addon.name}</span>
-              <input
-                type="number"
-                min={0}
-                onChange={e => updateAddon(addon.id, +e.target.value)}
-                className="input-field w-20 border border-gray-400 rounded p-1 bg-gray-100 text-black focus:ring-2 focus:ring-red-500"
-              />
+              <h4 className="font-semibold">{cat.name}</h4>
+              <p>{cat.capacity} osoba</p>
             </div>
           ))}
         </div>
 
         <button
-          className="btn-primary mt-4 w-full sm:w-auto bg-red-600 text-white font-medium py-2 px-4 rounded-md shadow hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={!selectedRoom}
           onClick={createReservation}
+          disabled={!selectedCategory || loading}
+          className="btn-primary bg-red-600 text-white py-2 px-4 rounded-md"
         >
           Rezerviraj
         </button>
@@ -326,15 +285,20 @@ export default function ReservationsPage() {
 
       {/* ============ MY RESERVATIONS ============ */}
       <section className="my-reservations space-y-4">
-        <h1 className="page-title text-2xl font-bold text-white">Moje rezervacije</h1>
+        <h1 className="page-title text-2xl font-bold text-white">
+          Moje rezervacije
+        </h1>
 
-        <DataTable
-          data={paginatedData}
-          columns={columns}
-          onRowClick={row => router.push(`/reservations/${row.id}`)}
-          onEdit={row => row.status === "PENDING" && setFormData(row)}
-          className="data-table bg-gray-100 text-black"
-        />
+        {loading ? (
+          <div className="text-gray-500">Učitavanje...</div>
+        ) : (
+          <DataTable
+            data={paginatedData}
+            columns={columns}
+            onRowClick={row => router.push(`/reservations/${row.id}`)}
+            className="data-table bg-gray-100 text-black"
+          />
+        )}
 
         <Pagination
           currentPage={currentPage}

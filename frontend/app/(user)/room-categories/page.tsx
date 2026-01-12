@@ -105,22 +105,29 @@ export default function RoomCategoriesPage() {
 
   return (
     <div className="dashboard-main">
-      <div className="page-header">
-        <h1 className="page-title">Kategorije soba</h1>
+      <div className="page-header flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#262626] pb-6">
+        <h1 className="page-title text-2xl font-bold text-white tracking-tight">
+          Kategorije soba
+        </h1>
         {message && (
           <p className="text-sm text-red-400 mt-2">{message}</p>
         )}
       </div>
 
+        <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl p-4 mb-4">
       <FilterBar
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Pretraži kategorije..."
+        
       />
-
+     
+</div>
+<div className="bg-[#0f0f0f] border border-[#262626] rounded-xl overflow-hidden shadow-2xl">
       {loading ? (
         <div className="p-10 text-center text-gray-400">Učitavanje...</div>
       ) : (
+         
         <DataTable
           data={filteredData}
           columns={columns}
@@ -128,6 +135,7 @@ export default function RoomCategoriesPage() {
           className="data-table"
         />
       )}
+    </div>
     </div>
   );
 }

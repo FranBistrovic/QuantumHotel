@@ -19,6 +19,7 @@ import {
   LogOut,
   UserCircle,
   Trash2,
+  Layers,
 } from "lucide-react";
 
 const playfair = Playfair_Display({
@@ -150,7 +151,7 @@ export default function RootLayout({
   };
 
   const navigation = [
-    { name: "Rezervacije", href: `${prefix}/reservations`, icon: Calendar },
+    { name: "Kategorije soba", href: `${prefix}/room-categories`, icon: Layers },
     ...(role === "admin" || role === "staff"
       ? [
           { name: "Sobe", href: `${prefix}/rooms`, icon: Home },
