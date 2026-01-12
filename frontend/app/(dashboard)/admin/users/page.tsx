@@ -5,7 +5,7 @@ import { DataTable, Column } from "../../../components/DataTable";
 import { Pagination } from "../../../components/Pagination";
 import { FilterBar } from "../../../components/FilterBar";
 import { Modal } from "../../../components/Modal";
-import { Plus, UserCheck, UserX } from "lucide-react";
+import { Plus, UserCheck, UserX, ImageIcon } from "lucide-react";
 
 interface User {
   id: number;
@@ -16,6 +16,9 @@ interface User {
   role: "ADMIN" | "STAFF" | "GUEST";
   enabled: boolean;
   gender: "MALE" | "FEMALE" | "OTHER";
+  city?: string;
+  dateOfBirth?: string;
+  imageUrl?: string;
 }
 
 export default function UsersPage() {
@@ -27,12 +30,19 @@ export default function UsersPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Popravljen tip za sortiranje bez errora
   const [sortConfig, setSortConfig] = useState<{
-    key: any;
+    key: keyof User;
     direction: "asc" | "desc";
   } | null>(null);
 
   const itemsPerPage = 10;
+
+  const getAvatarUrl = (path?: string) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    return `http://localhost:5000${path}`;
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -64,35 +74,30 @@ export default function UsersPage() {
     const isNew = !formData.id || formData.id === 0;
 
     try {
+      const payload = {
+        ...formData,
+        username: formData.username, // Osiguravamo da se šalje za update
+        password: isNew ? "Test1234" : undefined,
+        provider: isNew ? "LOCAL" : undefined,
+        enabled: formData.enabled === true,
+        accountNonLocked: formData.enabled === true,
+      };
+
       let res: Response;
       if (isNew) {
         res = await fetch("/api/admin/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...formData,
-            password: "Test1234",
-            provider: "LOCAL",
-            accountNonLocked: true,
-            emailVerified: false,
-            enabled: formData.enabled === true,
-          }),
+          body: JSON.stringify(payload),
         });
       } else {
         res = await fetch(`/api/admin/users/${formData.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            username: formData.username,
-            gender: formData.gender,
-            enabled: formData.enabled === true,
-            accountNonLocked: formData.enabled === true,
-          }),
+          body: JSON.stringify(payload),
         });
 
+        // Poseban poziv za ulogu ako je promijenjena
         const originalUser = users.find((u) => u.id === formData.id);
         if (originalUser && originalUser.role !== formData.role) {
           await fetch(`/api/admin/users/${formData.id}/role`, {
@@ -110,9 +115,7 @@ export default function UsersPage() {
         setTimeout(() => setMessage(""), 3000);
       } else {
         const errorData = await res.json().catch(() => ({}));
-        setMessage(
-          `❌ Akcija nije uspjela: ${errorData.message || "Provjerite podatke"}`
-        );
+        setMessage(`❌ Greška: ${errorData.message || "Neuspješno spremanje"}`);
       }
     } catch (err) {
       setMessage("⚠️ Greška pri komunikaciji s API-jem.");
@@ -132,12 +135,12 @@ export default function UsersPage() {
         setTimeout(() => setMessage(""), 3000);
       }
     } catch (err) {
-      setMessage("⚠️ Brisanje nije uspjela.");
+      setMessage("⚠️ Brisanje nije uspjelo.");
     }
   };
 
   const processedData = useMemo(() => {
-    let result = users.filter(
+    let result = [...users].filter(
       (u) =>
         (u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -147,9 +150,9 @@ export default function UsersPage() {
     );
 
     if (sortConfig && sortConfig.key) {
-      result.sort((a: any, b: any) => {
-        const aValue = a[sortConfig.key];
-        const bValue = b[sortConfig.key];
+      result.sort((a, b) => {
+        const aValue = a[sortConfig.key] ?? "";
+        const bValue = b[sortConfig.key] ?? "";
         if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
@@ -170,11 +173,26 @@ export default function UsersPage() {
       label: "KORISNIK",
       sortable: true,
       render: (_, row) => (
-        <div className="flex flex-col">
-          <span className="font-bold text-white text-base">
-            {row.firstName} {row.lastName}
-          </span>
-          <span className="text-xs text-gray-500">{row.username}</span>
+        <div className="flex items-center gap-3 py-1">
+          <div className="h-10 w-10 rounded-full bg-[#1a1a1a] border border-[#262626] overflow-hidden flex-shrink-0">
+            {row.imageUrl ? (
+              <img
+                src={getAvatarUrl(row.imageUrl)!}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center text-gray-600">
+                <ImageIcon size={18} />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="font-bold text-white text-base leading-tight">
+              {row.firstName} {row.lastName}
+            </span>
+            <span className="text-xs text-gray-500">@{row.username}</span>
+          </div>
         </div>
       ),
     },
@@ -183,6 +201,14 @@ export default function UsersPage() {
       label: "EMAIL",
       sortable: true,
       render: (v) => <span className="text-gray-300 font-medium">{v}</span>,
+    },
+    {
+      key: "city",
+      label: "GRAD",
+      sortable: true,
+      render: (v) => (
+        <span className="text-gray-400 font-medium">{v || "-"}</span>
+      ),
     },
     {
       key: "role",
@@ -244,6 +270,9 @@ export default function UsersPage() {
               role: "GUEST",
               enabled: true,
               gender: "FEMALE",
+              city: "",
+              dateOfBirth: "",
+              imageUrl: "",
             })
           }
         >
@@ -258,7 +287,7 @@ export default function UsersPage() {
           searchPlaceholder="Pretraži korisnike..."
         >
           <select
-            className="filter-input bg-[#141414] text-white border-[#262626] rounded-lg h-[40px] px-3 outline-none focus:border-blue-500"
+            className="filter-input bg-[#141414] text-white border-[#262626] rounded-lg h-[40px] px-3 outline-none"
             value={roleFilter}
             onChange={(e) => {
               setRoleFilter(e.target.value);
@@ -275,17 +304,18 @@ export default function UsersPage() {
 
       <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl overflow-hidden shadow-2xl">
         {loading ? (
-          <div className="p-10 text-center text-gray-500">Učitavanje...</div>
+          <div className="p-10 text-center text-gray-500 animate-pulse">
+            Učitavanje...
+          </div>
         ) : (
-          <DataTable
+          <DataTable<User>
             data={paginatedData}
             columns={columns}
             onEdit={(row) => setFormData({ ...row })}
             onDelete={handleDelete}
             className="data-table"
-            // @ts-ignore
-            onSort={(key: any, direction: any) =>
-              setSortConfig({ key, direction })
+            onSort={(key, direction) =>
+              setSortConfig({ key: key as keyof User, direction })
             }
           />
         )}
@@ -310,7 +340,7 @@ export default function UsersPage() {
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-gray-400 uppercase">
                   Ime
                 </label>
                 <input
@@ -322,7 +352,7 @@ export default function UsersPage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-gray-400 uppercase">
                   Prezime
                 </label>
                 <input
@@ -337,35 +367,75 @@ export default function UsersPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Korisničko ime
+                <label className="text-xs font-semibold text-gray-400 uppercase">
+                  Grad
                 </label>
                 <input
                   className="input-field"
-                  value={formData.username || ""}
+                  value={formData.city || ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, username: e.target.value })
+                    setFormData({ ...formData, city: e.target.value })
                   }
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Email
+                <label className="text-xs font-semibold text-gray-400 uppercase">
+                  Datum rođenja
                 </label>
                 <input
+                  type="date"
                   className="input-field"
-                  type="text"
-                  value={formData.email || ""}
+                  value={formData.dateOfBirth?.split("T")[0] || ""}
                   onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
+                    setFormData({ ...formData, dateOfBirth: e.target.value })
                   }
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-gray-400 uppercase">
+                Korisničko ime
+              </label>
+              <input
+                className="input-field"
+                value={formData.username || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-gray-400 uppercase">
+                URL Slike
+              </label>
+              <input
+                className="input-field"
+                placeholder="/uploads/..."
+                value={formData.imageUrl || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, imageUrl: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-gray-400 uppercase">
+                Email
+              </label>
+              <input
+                className="input-field"
+                value={formData.email || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-gray-400 uppercase">
                   Uloga
                 </label>
                 <select
@@ -381,7 +451,7 @@ export default function UsersPage() {
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <label className="text-xs font-semibold text-gray-400 uppercase">
                   Spol
                 </label>
                 <select
@@ -391,30 +461,29 @@ export default function UsersPage() {
                     setFormData({ ...formData, gender: e.target.value as any })
                   }
                 >
-                  <option value="MALE">Muški</option>
-                  <option value="FEMALE">Ženski</option>
-                  <option value="OTHER">Ostalo</option>
+                  <option value="MALE">M</option>
+                  <option value="FEMALE">Ž</option>
+                  <option value="OTHER">O</option>
                 </select>
               </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5 pt-2">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Status računa
-              </label>
-              <select
-                className="input-field"
-                value={formData.enabled ? "true" : "false"}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    enabled: e.target.value === "true",
-                  })
-                }
-              >
-                <option value="true">AKTIVAN</option>
-                <option value="false">ONEMOGUĆEN</option>
-              </select>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-400 uppercase">
+                  Status
+                </label>
+                <select
+                  className="input-field"
+                  value={formData.enabled ? "true" : "false"}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      enabled: e.target.value === "true",
+                    })
+                  }
+                >
+                  <option value="true">AKTIVAN</option>
+                  <option value="false">ONEMOGUĆEN</option>
+                </select>
+              </div>
             </div>
 
             <div className="flex gap-3 justify-end w-full border-t border-[#262626] pt-4 mt-4">
