@@ -17,7 +17,7 @@ public interface AccommodationCategoryRepository extends JpaRepository<Accommoda
        JOIN r.category c
        WHERE r.dateFrom >= :startDate
          AND r.dateTo <= :endDate
-         AND r.status = 'COMPLETED'
+         AND r.status = 'CONFIRMED'
        GROUP BY c.Id, c.name
        ORDER BY COUNT(r) DESC
        """)

@@ -48,8 +48,6 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         // Public pages and assets
-                        .requestMatchers("/api/city").permitAll()
-
                         .requestMatchers("/api/auth/**", "/oauth2/**", "/css/**", "/js/**", "/images/**", "/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/faq/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/articles/**").permitAll()
@@ -60,6 +58,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/reservations/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/reservations").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/reservations/**").authenticated()
+
+                        // Location routes
+                        .requestMatchers(HttpMethod.GET, "/api/location").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/location").hasAnyRole("ADMIN")
 
                         //Admin/staff rooms routes
                         .requestMatchers(HttpMethod.GET, "/api/rooms/**").authenticated()
