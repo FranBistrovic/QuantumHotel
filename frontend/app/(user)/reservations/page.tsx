@@ -4,23 +4,29 @@ import { useState, useEffect } from "react";
 import { DataTable, Column } from "../../components/DataTable";
 import { Pagination } from "../../components/Pagination";
 import { useRouter } from "next/navigation";
+import { Modal } from "../../components/Modal";
 
 /* ================= TYPES ================= */
 
 interface Reservation {
   id: number;
-  user: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  room: {
-    roomNumber: string;
-  } | null;
+  userId: number;
   dateFrom: string;
   dateTo: string;
   status: "PENDING" | "CONFIRMED" | "REJECTED";
-  totalPrice: number;
+
+  categoryName: string;
+  categoryId: number;
+  categoryPrice: number;
+
+  unitNumber: number | null;
+
+  amenities: {
+    id: number;
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
 }
 
 interface Room {
@@ -74,26 +80,69 @@ export default function ReservationsPage() {
 
   /* ================= EFFECTS ================= */
 
+  const [loading, setLoading] = useState(true);
+
+  // Fetch reservations safely
   useEffect(() => {
-    fetch("/api/reservations/me")
-      .then(res => res.json())
-      .then(setReservations)
-      .catch(console.error);
+    let isMounted = true; // avoid setting state if component unmounted
+
+    const fetchReservations = async () => {
+      try {
+        const res = await fetch("/api/reservations/me", { credentials: "include" });
+        if (!res.ok) {
+          // redirect to login if not authorized
+          router.replace("/login");
+          return;
+        }
+
+        const data = await res.json();
+        if (isMounted) setReservations(data);
+      } catch (err) {
+        console.error(err);
+        router.replace("/login"); // fallback redirect
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchReservations();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
+
+  // Fetch addons safely
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchAddons = async () => {
+      try {
+        const res = await fetch("/api/addons");
+        if (!res.ok) throw new Error("Failed to fetch addons");
+
+        const data = await res.json();
+        if (isMounted) setAddons(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchAddons();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  useEffect(() => {
-    fetch("/api/addons")
-      .then(res => res.json())
-      .then(setAddons)
-      .catch(console.error);
-  }, []);
+  if (loading) return <div>Učitavanje...</div>;
 
   /* ================= LOGIC ================= */
 
   const fetchAvailableRooms = async () => {
     if (!dateFrom || !dateTo) return;
     const res = await fetch(
-      `/api/rooms/available?from=${dateFrom}&to=${dateTo}&persons=${persons}`
+      `/api/room-categories/available?from=${dateFrom}&to=${dateTo}&persons=${persons}`
     );
     setAvailableRooms(await res.json());
   };
@@ -122,7 +171,7 @@ export default function ReservationsPage() {
       body: JSON.stringify({
         dateFrom,
         dateTo,
-        categoryId: selectedRoom.categoryId,
+        categoryId: selectedRoom.id,
         amenities: selectedAddons,
       }),
     });
@@ -155,11 +204,8 @@ export default function ReservationsPage() {
           method: isEdit ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            user: formData.user,
-            room: formData.room,
             dateFrom: formData.dateFrom,
             dateTo: formData.dateTo,
-            totalPrice: formData.totalPrice,
           }),
         }
       );
@@ -180,14 +226,21 @@ export default function ReservationsPage() {
   };
 
   /* ---------------- FILTER & PAGINATION ---------------- */
+
+
   const filteredData = reservations.filter(res => {
-    const fullName = `${res.user?.firstName || ""} ${res.user?.lastName || ""}`.toLowerCase();
+    const search = searchTerm.toLowerCase();
+
     const matchesSearch =
-      fullName.includes(searchTerm.toLowerCase()) ||
-      res.room?.roomNumber.includes(searchTerm);
-    const matchesStatus = statusFilter === "all" || res.status === statusFilter;
+      res.categoryName?.toLowerCase().includes(search) ||
+      String(res.unitNumber || "").includes(search);
+
+    const matchesStatus =
+      statusFilter === "all" || res.status === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
+
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
   const paginatedData = filteredData.slice(
@@ -198,8 +251,8 @@ export default function ReservationsPage() {
   const columns: Column<Reservation>[] = [
     {
       label: "Soba",
-      key: "room",
-      render: room => room?.roomNumber || "Nije dodijeljena",
+      key: "unitNumber",
+      render: value => value ?? "Nije dodijeljena",
     },
     { key: "dateFrom", label: "Dolazak", sortable: true },
     { key: "dateTo", label: "Odlazak", sortable: true },
@@ -208,22 +261,40 @@ export default function ReservationsPage() {
       label: "Status",
       render: (value: Reservation["status"]) => (
         <span
-          className={`px-2 py-1 rounded-full text-sm ${
-            value === "PENDING"
+          className={`px-2 py-1 rounded-full text-sm ${value === "PENDING"
               ? "bg-gray-300 text-gray-900"
               : value === "CONFIRMED"
-              ? "bg-gray-200 text-gray-900 border border-gray-400"
-              : "bg-red-100 text-red-800 border border-red-300"
-          }`}
+                ? "bg-gray-200 text-gray-900 border border-gray-400"
+                : "bg-red-100 text-red-800 border border-red-300"
+            }`}
         >
           {statusLabels[value]}
         </span>
       ),
     },
     {
-      key: "totalPrice",
       label: "Iznos",
-      render: value => `${value} €`,
+      key: "categoryPrice",
+      render: (_, row) => {
+        const start = new Date(row.dateFrom);
+        const end = new Date(row.dateTo);
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const nights = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / msPerDay));
+
+        // Sum amenities
+        const amenitiesTotal = row.amenities?.reduce(
+          (sum, a) => sum + a.price * a.quantity,
+          0
+        ) || 0;
+
+        const total = (row.categoryPrice + amenitiesTotal) * nights;
+
+        return (
+          <span className="text-emerald-400 font-bold">
+            {total.toFixed(2)} €
+          </span>
+        );
+      },
     },
   ];
 
@@ -286,11 +357,10 @@ export default function ReservationsPage() {
           {availableRooms.map(room => (
             <div
               key={room.id}
-              className={`room-card p-4 border rounded cursor-pointer ${
-                selectedRoom?.id === room.id
+              className={`room-card p-4 border rounded cursor-pointer ${selectedRoom?.id === room.id
                   ? "border-red-600 bg-gray-200 shadow-md"
                   : "border-gray-400 hover:border-red-500 hover:bg-gray-200"
-              }`}
+                }`}
               onClick={() => setSelectedRoom(room)}
             >
               <h4 className="font-semibold text-black">Soba {room.roomNumber}</h4>
@@ -331,10 +401,60 @@ export default function ReservationsPage() {
         <DataTable
           data={paginatedData}
           columns={columns}
-          onRowClick={row => router.push(`/reservations/${row.id}`)}
+          // onRowClick={row => router.push(`/reservations/${row.id}`)}
           onEdit={row => row.status === "PENDING" && setFormData(row)}
-          className="data-table bg-gray-100 text-black"
+          className="data-table bg-gray-100 text-white"
         />
+
+        <Modal
+          isOpen={!!formData}
+          onClose={() => setFormData(null)}
+          title="Uredi rezervaciju"
+        >
+          {formData && (
+            <div className="space-y-5 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Dolazak
+                  </label>
+                  <input
+                    type="date"
+                    className="input-field"
+                    value={formData.dateFrom || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, dateFrom: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Odlazak
+                  </label>
+                  <input
+                    type="date"
+                    className="input-field"
+                    value={formData.dateTo || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, dateTo: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end w-full border-t border-[#262626] pt-4 mt-4">
+                <button
+                  className="btn-secondary"
+                  onClick={() => setFormData(null)}
+                >
+                  Odustani
+                </button>
+                <button className="btn-primary px-6" onClick={handleSave}>
+                  Spremi promjene
+                </button>
+              </div>
+            </div>
+          )}
+        </Modal>
 
         <Pagination
           currentPage={currentPage}

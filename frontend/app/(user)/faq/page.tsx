@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { DataTable, Column } from "../../components/DataTable";
 import { FilterBar } from "../../components/FilterBar";
 
@@ -14,15 +14,30 @@ export default function FaqUserPage() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
 
   const itemsPerPage = 10;
 
   // --- Dohvaćanje FAQ s API-ja ---
   useEffect(() => {
-    fetch("/api/faq")
-      .then((res) => res.json())
-      .then((data: FAQ[]) => setFaqs(data))
-      .catch((err) => console.error("Greška pri dohvaćanju FAQ:", err));
+    const fetchFaqs = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/faq");
+        if (!res.ok) {
+          setMessage("⚠️ Greška pri učitavanju FAQ.");
+          return;
+        }
+        const data = await res.json();
+        setFaqs(Array.isArray(data) ? data : []);
+      } catch {
+        setMessage("⚠️ Veza sa serverom nije uspjela.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFaqs();
   }, []);
 
   // --- Filtriranje ---
@@ -49,28 +64,49 @@ export default function FaqUserPage() {
 
   return (
     <div className="dashboard-main">
-      <div className="page-header">
-        <h1 className="page-title">FAQ</h1>
+      {/* Header */}
+      <div className="page-header flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#262626] pb-6">
+        <h1 className="page-title text-2xl font-bold text-white tracking-tight">FAQ</h1>
+        {message && (
+          <p
+            className={`text-sm mt-2 font-medium ${
+              message.includes("✅") ? "text-emerald-400" : "text-red-400"
+            }`}
+          >
+            {message}
+          </p>
+        )}
       </div>
 
-      <FilterBar
-        searchValue={searchTerm}
-        onSearchChange={(v) => {
-          setSearchTerm(v);
-          setCurrentPage(1);
-        }}
-        searchPlaceholder="Pretraži pitanja ili odgovore..."
-      />
+      {/* FilterBar box */}
+        <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl p-4 mb-4">
+        <FilterBar
+          searchValue={searchTerm}
+          onSearchChange={(v) => {
+            setSearchTerm(v);
+            setCurrentPage(1);
+          }}
+          searchPlaceholder="Pretraži pitanja ili odgovore..."
+        />
+        </div>
 
-      <DataTable
-        data={paginatedFaqs}
-        columns={columns}
-        className="data-table"
-        actions={false}
-        // Za user view nema onEdit i onDelete
-      />
+      {/* DataTable box */}
+      
+        {loading ? (
+          <div className="p-10 text-center text-gray-500">
+            Učitavanje FAQ...
+          </div>
+        ) : (
+          <DataTable
+            data={paginatedFaqs}
+            columns={columns}
+            actions={false} // user view nema edit/delete
+            className="data-table"
+          />
+        )}
 
-      {/* Paginacija */}
+
+      {/* Pagination */}
       <div className="pagination-wrapper">
         {totalPages > 1 && (
           <div className="pagination">

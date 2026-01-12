@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   Calendar,
+  User,
   Home,
   Layers,
   Package,
@@ -44,10 +45,8 @@ export function DashboardLayout({
   /* -------------------------------------------------
    NAVIGACIJA – ISTA KAO TVOJA
   ------------------------------------------------- */
-  const navigation = [
-    { name: "Rezervacije", href: `${prefix}/reservations`, icon: Calendar }
-  ];
-
+  
+  const navigation =[ {name: "Rezervacije", href: `${prefix}/reservations`, icon: Calendar }];
 
   if (role === "admin" || role === "staff") {
     navigation.push(
@@ -77,7 +76,8 @@ export function DashboardLayout({
   if (role === "admin") {
     navigation.push(
       { name: "Korisnici", href: "/admin/users", icon: Users },
-      { name: "Statistika", href: "/admin/stats", icon: BarChart3 }
+      { name: "Statistika", href: "/admin/stats", icon: BarChart3 },
+      { name: "Location", href: "/admin/location", icon: Package }
     );
   }
 
