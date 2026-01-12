@@ -8,20 +8,30 @@ import { Modal } from "../../../components/Modal";
 
 interface Reservation {
   id: number;
-  user: {
-    id?: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  room: {
-    id: number;
-    roomNumber: string;
-  } | null;
+  userId: number;
   dateFrom: string;
   dateTo: string;
   status: "PENDING" | "CONFIRMED" | "REJECTED";
-  totalPrice: number;
+
+  categoryName: string;
+  categoryId: number;
+  categoryPrice: number;
+
+  unitNumber: number | null;
+
+  amenities: {
+    id: number;
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
+}
+
+interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
 }
 
 const statusLabels = {
@@ -35,7 +45,7 @@ const getErrorMessage = async (response: Response) => {
   if (response.status === 403) return "⛔ Nemate ovlasti.";
   try {
     const data = await response.json();
-    return data?.message || "⚠️ Greška na serveru.";
+    return data?.detail || "⚠️ Greška na serveru.";
   } catch {
     return "⚠️ Pogreška.";
   }
@@ -64,10 +74,51 @@ export default function StaffReservationsPage() {
     fetchReservations();
   }, []);
 
+  const fetchUserById = async (
+    id: number
+  ): Promise<User | undefined> => {
+    try {
+      const response = await fetch(`/api/admin/users/${id}`);
+      if (!response.ok) return undefined;
+      const data: User = await response.json();
+      return data;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const UserCell = ({ userId }: { userId: number }) => {
+    const [user, setUser] = useState<User | null>(null);
+
+    useEffect(() => {
+      let mounted = true;
+
+      fetchUserById(userId)
+        .then((u) => {
+          if (mounted) setUser(u ?? null);
+        })
+        .catch(() => { });
+
+      return () => {
+        mounted = false;
+      };
+    }, [userId]);
+    return (
+      <div className="flex flex-col py-1">
+        <span className="font-bold text-white text-sm">
+          {user?.firstName || "Nepoznat"} {user?.lastName || "Gost"}
+        </span>
+        <span className="text-[11px] text-gray-500">
+          {user?.email || "Nema e-maila"}
+        </span>
+      </div>
+    );
+  };
+
   const fetchReservations = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${apiBase}/reservations?t=${Date.now()}`);
+      const response = await fetch(`${apiBase}/reservations`);
       if (response.ok) {
         const data = await response.json();
         setReservations(Array.isArray(data) ? data : []);
@@ -106,7 +157,7 @@ export default function StaffReservationsPage() {
   const handleSave = async () => {
     if (!formData) return;
     try {
-      const response = await fetch(`${apiBase}/reservations/${formData.id}`, {
+      const response = await fetch(`/api/reservations/${formData.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -132,37 +183,35 @@ export default function StaffReservationsPage() {
   const processedData = useMemo(() => {
     let result = reservations.filter((res) => {
       const search = searchTerm.toLowerCase();
-      const guestName = `${res.user?.firstName || ""} ${
-        res.user?.lastName || ""
-      }`.toLowerCase();
-      const roomNum = res.room?.roomNumber?.toLowerCase() || "";
+      const guestName = "";
+      const roomNum = "SOBA " + res.unitNumber || "";
       return (
-        (guestName.includes(search) || roomNum.includes(search)) &&
+        (guestName.includes(search) || roomNum.toString().toLowerCase().includes(search)) &&
         (statusFilter === "all" || res.status === statusFilter)
       );
     });
 
-    if (sortConfig) {
-      result.sort((a: any, b: any) => {
-        let aVal, bVal;
+    // if (sortConfig) {
+    //   result.sort((a: any, b: any) => {
+    //     let aVal, bVal;
 
-        // Posebno rukovanje za objekte (Gost i Soba)
-        if (sortConfig.key === "user") {
-          aVal = `${a.user?.firstName} ${a.user?.lastName}`;
-          bVal = `${b.user?.firstName} ${b.user?.lastName}`;
-        } else if (sortConfig.key === "room") {
-          aVal = a.room?.roomNumber || "";
-          bVal = b.room?.roomNumber || "";
-        } else {
-          aVal = a[sortConfig.key] ?? "";
-          bVal = b[sortConfig.key] ?? "";
-        }
+    //     // Posebno rukovanje za objekte (Gost i Soba)
+    //     if (sortConfig.key === "user") {
+    //       aVal = `${a.user?.firstName} ${a.user?.lastName}`;
+    //       bVal = `${b.user?.firstName} ${b.user?.lastName}`;
+    //     } else if (sortConfig.key === "room") {
+    //       aVal = a.room?.roomNumber || "";
+    //       bVal = b.room?.roomNumber || "";
+    //     } else {
+    //       aVal = a[sortConfig.key] ?? "";
+    //       bVal = b[sortConfig.key] ?? "";
+    //     }
 
-        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-        return 0;
-      });
-    }
+    //     if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+    //     if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+    //     return 0;
+    //   });
+    // }
     return result;
   }, [reservations, searchTerm, statusFilter, sortConfig]);
 
@@ -176,16 +225,7 @@ export default function StaffReservationsPage() {
       label: "Gost",
       key: "user",
       sortable: true,
-      render: (_, row) => (
-        <div className="flex flex-col py-1">
-          <span className="font-bold text-white text-sm">
-            {row.user?.firstName || "Nepoznat"} {row.user?.lastName || "Gost"}
-          </span>
-          <span className="text-[11px] text-gray-500">
-            {row.user?.email || "Nema e-maila"}
-          </span>
-        </div>
-      ),
+      render: (_, row) => <UserCell userId={row.userId} />,
     },
     {
       label: "Soba",
@@ -194,7 +234,7 @@ export default function StaffReservationsPage() {
       render: (_, row) => (
         <div className="flex items-center">
           <span className="text-gray-300 font-mono bg-[#1a1a1a] px-2.5 py-1 rounded-md border border-[#262626] text-xs">
-            {row.room?.roomNumber ? `SOBA ${row.room.roomNumber}` : "---"}
+            {row.unitNumber ? `SOBA ${row.unitNumber}` : "---"}
           </span>
         </div>
       ),
@@ -231,11 +271,28 @@ export default function StaffReservationsPage() {
     },
     {
       label: "Iznos",
-      key: "totalPrice",
+      key: "categoryPrice",
       sortable: true,
-      render: (val) => (
-        <span className="text-emerald-400 font-bold">{val} €</span>
-      ),
+      render: (_, row) => {
+        const start = new Date(row.dateFrom);
+        const end = new Date(row.dateTo);
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const nights = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / msPerDay));
+
+        // Sum amenities
+        const amenitiesTotal = row.amenities?.reduce(
+          (sum, a) => sum + a.price * a.quantity,
+          0
+        ) || 0;
+
+        const total = (row.categoryPrice + amenitiesTotal) * nights;
+
+        return (
+          <span className="text-emerald-400 font-bold">
+            {total.toFixed(2)} €
+          </span>
+        );
+      },
     },
   ];
 
@@ -248,9 +305,8 @@ export default function StaffReservationsPage() {
           </h1>
           {message && (
             <p
-              className={`text-xs mt-2 font-medium ${
-                message.includes("✅") ? "text-emerald-400" : "text-red-400"
-              }`}
+              className={`text-xs mt-2 font-medium ${message.includes("✅") ? "text-emerald-400" : "text-red-400"
+                }`}
             >
               {message}
             </p>
@@ -298,9 +354,9 @@ export default function StaffReservationsPage() {
             }
             onConfirm={(row) => updateStatusAction(row.id, "confirm")}
             onReject={(row) => updateStatusAction(row.id, "reject")}
-            onSort={(key, direction) =>
-              setSortConfig({ key: key as keyof Reservation, direction })
-            }
+            // onSort={(key, direction) =>
+            //   setSortConfig({ key: key as keyof Reservation, direction })
+            // }
             className="data-table"
           />
         )}

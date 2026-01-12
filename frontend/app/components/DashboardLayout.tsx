@@ -76,7 +76,8 @@ export function DashboardLayout({
   if (role === "admin") {
     navigation.push(
       { name: "Korisnici", href: "/admin/users", icon: Users },
-      { name: "Statistika", href: "/admin/stats", icon: BarChart3 }
+      { name: "Statistika", href: "/admin/stats", icon: BarChart3 },
+      { name: "Location", href: "/admin/location", icon: Package }
     );
   }
 

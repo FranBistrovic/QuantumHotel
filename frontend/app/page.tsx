@@ -1,6 +1,33 @@
+"use client"
 import Image from "next/image";
+import { useEffect, useState } from "react";
+
+interface Location {
+  latitude: number;
+  longitude: number;
+}
 
 export default function HomePage() {
+  const [location, setLocation] = useState<Location | null>(null);
+  useEffect(() => {
+    fetch("/api/location")
+      .then(res => {
+        if (!res.ok) throw new Error("Greška pri dohvaćanju lokacije");
+        return res.json();
+      })
+      .then(setLocation)
+      .catch(console.error);
+  }, []);
+
+  if (!location) {
+    return (
+      <div className="h-[350px] flex items-center justify-center">
+        Učitavanje lokacije…
+      </div>
+    );
+  }
+  const mapUrl = `https://www.google.com/maps?q=${location.latitude},${location.longitude}&z=15&output=embed`;
+  console.log(mapUrl);
   return (
     <div className="space-y-8">
       <h2 className="text-4xl font-bold text-[#800020]">
@@ -57,7 +84,7 @@ export default function HomePage() {
       <div>
         <h3 className="text-2xl font-semibold text-[#800020]">Naša lokacija</h3>
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2781.610315863859!2d15.969584815822903!3d45.801278779106236!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4765d68af8fe543f%3A0x1a207fe4decb723!2sFakultet%20elektrotehnike%20i%20ra%C4%8Dunarstva%20(FER)!5e0!3m2!1sen!2shr!4v1731358500000"
+          src={mapUrl}
           width="100%"
           height="350"
           style={{ border: 0 }}

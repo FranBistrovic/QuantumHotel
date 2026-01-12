@@ -20,7 +20,7 @@ const getErrorMessage = async (response: Response) => {
   if (response.status === 403) return "⛔ Nemate ovlasti.";
   try {
     const data = await response.json();
-    return data?.message || "⚠️ Greška na serveru.";
+    return data?.detail || "⚠️ Greška na serveru.";
   } catch {
     return "⚠️ Pogreška.";
   }

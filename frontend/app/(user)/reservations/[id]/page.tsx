@@ -6,68 +6,64 @@ import { Modal } from "../../../components/Modal";
 
 interface Reservation {
   id: number;
-  user: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  room: {
-    roomNumber: string;
-  } | null;
   dateFrom: string;
   dateTo: string;
   status: "PENDING" | "CONFIRMED" | "REJECTED";
-  totalPrice: number;
+
+  categoryName: string;
+  categoryId: number;
+  categoryPrice: number;
+
+  unitNumber: number | null;
+
+  amenities: {
+    id: number;
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
 }
+
 
 export default function ReservationPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
   const [reservation, setReservation] = useState<Reservation | null>(null);
-  const [formData, setFormData] = useState<Reservation | null>(null);
   const [loading, setLoading] = useState(true);
 
   // 🔹 GET /api/reservations/{id}
   useEffect(() => {
     fetch(`/api/reservations/${id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setReservation(data);
-        setFormData(data);
-      })
+      .then(res => res.json())
+      .then(setReservation)
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [id]);
 
+
   // 🔹 PATCH /api/reservations/{id}
   const handleSave = async () => {
-    if (!formData || formData.status !== "PENDING") return;
+    if (!reservation || reservation.status !== "PENDING") return;
 
-    try {
-      await fetch(`/api/reservations/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user: formData.user,
-          dateFrom: formData.dateFrom,
-          dateTo: formData.dateTo,
-          totalPrice: formData.totalPrice,
-          room: formData.room,
-        }),
-      });
+    await fetch(`/api/reservations/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        dateFrom: reservation.dateFrom,
+        dateTo: reservation.dateTo,
+      }),
+    });
 
-      router.back();
-    } catch (err) {
-      console.error(err);
-    }
+    router.back();
   };
+
 
   if (loading) {
     return <div className="dashboard-main">Učitavanje...</div>;
   }
 
-  if (!reservation || !formData) {
+  if (!reservation) {
     return <div className="dashboard-main">Rezervacija nije pronađena</div>;
   }
 
@@ -102,32 +98,20 @@ export default function ReservationPage() {
         <div className="form-vertical-layout">
           <div className="form-grid-two-columns">
             <div className="form-group">
-              <label>Ime</label>
+              <label>Soba</label>
               <input
                 className="input-field"
-                disabled={!isEditable}
-                value={formData.user.firstName}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    user: { ...formData.user, firstName: e.target.value },
-                  })
-                }
+                disabled
+                value={reservation.unitNumber ?? "Nije dodijeljena"}
               />
             </div>
 
             <div className="form-group">
-              <label>Prezime</label>
+              <label>Kategorija</label>
               <input
                 className="input-field"
-                disabled={!isEditable}
-                value={formData.user.lastName}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    user: { ...formData.user, lastName: e.target.value },
-                  })
-                }
+                disabled
+                value={reservation.categoryName}
               />
             </div>
           </div>
@@ -138,10 +122,10 @@ export default function ReservationPage() {
               <input
                 type="date"
                 className="input-field"
-                disabled={!isEditable}
-                value={formData.dateFrom}
-                onChange={(e) =>
-                  setFormData({ ...formData, dateFrom: e.target.value })
+                disabled={reservation.status !== "PENDING"}
+                value={reservation.dateFrom}
+                onChange={e =>
+                  setReservation({ ...reservation, dateFrom: e.target.value })
                 }
               />
             </div>
@@ -151,10 +135,10 @@ export default function ReservationPage() {
               <input
                 type="date"
                 className="input-field"
-                disabled={!isEditable}
-                value={formData.dateTo}
-                onChange={(e) =>
-                  setFormData({ ...formData, dateTo: e.target.value })
+                disabled={reservation.status !== "PENDING"}
+                value={reservation.dateTo}
+                onChange={e =>
+                  setReservation({ ...reservation, dateTo: e.target.value })
                 }
               />
             </div>
@@ -162,23 +146,36 @@ export default function ReservationPage() {
 
           <div className="form-group">
             <label>Status</label>
-            <input
-              className="input-field"
-              disabled
-              value={reservation.status}
-            />
+            <input className="input-field" disabled value={reservation.status} />
           </div>
 
           <div className="form-group">
-            <label>Ukupni iznos (€)</label>
+            <label>Osnovna cijena (€)</label>
             <input
               type="number"
               className="input-field"
               disabled
-              value={formData.totalPrice}
+              value={reservation.categoryPrice}
             />
           </div>
+
+          <div className="form-group">
+            <label>Dodatne usluge</label>
+            <ul className="text-sm">
+              {reservation.amenities?.length ? (
+                reservation.amenities.map(a => (
+                  <li key={a.id}>
+                    {a.name} × {a.quantity} ({a.price} €)
+                  </li>
+                ))
+              ) : (
+                <li>Nema dodatnih usluga</li>
+              )}
+
+            </ul>
+          </div>
         </div>
+
       </Modal>
     </div>
   );

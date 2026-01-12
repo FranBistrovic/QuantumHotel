@@ -33,6 +33,26 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
+const hasRole = (user: any, roleName: "STAFF" | "ADMIN") => {
+  if (!user) return false;
+
+  if (typeof user.role === "string") {
+    return user.role.toUpperCase() === roleName;
+  }
+
+  if (Array.isArray(user.roles)) {
+    return user.roles.some(
+      (r: any) => r?.name?.toUpperCase() === roleName
+    );
+  }
+
+  if (Array.isArray(user.authorities)) {
+    return user.authorities.includes(roleName);
+  }
+
+  return false;
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -46,7 +66,6 @@ export default function RootLayout({
     firstName: "",
     lastName: "",
     email: "",
-    username: "",
     city: "",
     dateOfBirth: "",
     gender: "",
@@ -69,6 +88,9 @@ export default function RootLayout({
       ? "staff"
       : "user");
 
+  const isAdmin = hasRole(user, "ADMIN");
+  const isStaff = hasRole(user, "STAFF");
+
   const prefix = role === "admin" ? "/admin" : role === "staff" ? "/staff" : "";
 
   const handleLogout = async () => {
@@ -82,7 +104,6 @@ export default function RootLayout({
       firstName: user.firstName || "",
       lastName: user.lastName || "",
       email: user.email || "",
-      username: user.username || "",
       city: user.city || "",
       dateOfBirth: user.dateOfBirth
         ? user.dateOfBirth.split("T")[0]
@@ -101,7 +122,6 @@ export default function RootLayout({
     if (form.firstName !== user.firstName) body.firstName = form.firstName;
     if (form.lastName !== user.lastName) body.lastName = form.lastName;
     if (form.email !== user.email) body.email = form.email;
-    if (form.username !== user.username) body.username = form.username;
     if (form.city !== user.city) body.city = form.city;
 
     if (
@@ -151,21 +171,10 @@ export default function RootLayout({
   };
 
   const navigation = [
-    { name: "Kategorije soba", href: `${prefix}/room-categories`, icon: Layers },
-    ...(role === "admin" || role === "staff"
-      ? [
-          { name: "Sobe", href: `${prefix}/rooms`, icon: Home },
-          { name: "Dodaci", href: `${prefix}/addons`, icon: Package },
-        ]
-      : []),
-    { name: "Članci", href: `${prefix}/articles`, icon: FileText },
-    { name: "FAQ", href: `${prefix}/faq`, icon: HelpCircle },
-    ...(role === "admin"
-      ? [
-          { name: "Korisnici", href: "/admin/users", icon: Users },
-          { name: "Statistika", href: "/admin/stats", icon: BarChart3 },
-        ]
-      : []),
+     { name: "Rezervacije", href: `${prefix}/reservations`, icon: Calendar },
+     { name: "Kategorije soba", href: `${prefix}/room-categories`, icon: Layers },
+     { name: "Članci", href: `${prefix}/articles`, icon: FileText },
+     { name: "FAQ", href: `${prefix}/faq`, icon: HelpCircle },
   ];
 
   return (
@@ -193,7 +202,7 @@ export default function RootLayout({
                   alt="Logo"
                   fill
                   priority
-                  className="rounded-full border-2 border-[#D4AF37] object-cover"
+                  className="rounded-full border-2 border-[#D4AF37] object-cover "
                 />
               </div>
               <h1 className="text-xl font-bold tracking-widest uppercase font-playfair">
@@ -203,7 +212,7 @@ export default function RootLayout({
           </div>
 
           <nav className="flex-1 overflow-y-auto py-6 px-4">
-            <div className="space-y-2">
+            <div className="space-y-2 ">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
@@ -211,24 +220,38 @@ export default function RootLayout({
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all no-underline"
-                    style={{
-                      backgroundColor: isActive
-                        ? "rgba(212, 175, 55, 0.1)"
-                        : "transparent",
-                      color: isActive
-                        ? luxuryGold
-                        : "rgba(255, 255, 255, 0.6)",
-                      borderLeft: isActive
-                        ? `3px solid ${luxuryGold}`
-                        : "3px solid transparent",
-                    }}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-white no-underline"
                   >
                     <Icon size={18} />
                     <span className="text-sm font-medium">{item.name}</span>
                   </Link>
                 );
               })}
+
+                      {user && (
+            <div className="mb-6 space-y-2">
+              {isStaff && (
+                <Link
+                  href="/staff"
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-white no-underline"
+                >
+                  <Users size={18} />
+                  <span className="text-sm font-medium">Staff panel</span>
+                </Link>
+              )}
+
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-white no-underline"
+                >
+                  <BarChart3 size={18} />
+                  <span className="text-sm font-medium">Admin panel</span>
+                </Link>
+              )}
+            </div>
+          )}
+
             </div>
 
             <div className="mt-10 pt-6 border-t border-white/5 space-y-1">
@@ -247,6 +270,7 @@ export default function RootLayout({
                       width={32}
                       height={32}
                       className="rounded-full border border-[#D4AF37]"
+                      unoptimized
                     />
                     <span className="text-sm font-semibold truncate">
                       {user.firstName}

@@ -10,12 +10,14 @@ export default async function Home() {
   }
 
   try {
-    const res = await fetch("http://localhost:8080/api/users/me", {
+    const res = await fetch("/api/users/me", {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
 
     const user = await res.json();
+
+    console.log(user);
 
     if (user.role === "ADMIN") {
       redirect("/admin/stats");
