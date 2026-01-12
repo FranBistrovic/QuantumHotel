@@ -25,4 +25,20 @@ public interface AccommodationCategoryRepository extends JpaRepository<Accommoda
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
+    @Query("""
+    SELECT DISTINCT c FROM AccommodationCategory c
+    JOIN AccommodationUnit u ON u.category.id = c.id
+    WHERE c.capacity = :persons
+    AND NOT EXISTS (
+        SELECT r FROM Reservation r
+        WHERE r.unit.id = u.id
+        AND r.status = 'CONFIRMED'
+        AND NOT (r.dateTo <= :from OR r.dateFrom >= :to)
+    )
+""")
+    List<AccommodationCategory> findAvailableCategories(
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to,
+            @Param("persons") Integer persons
+    );
 }
