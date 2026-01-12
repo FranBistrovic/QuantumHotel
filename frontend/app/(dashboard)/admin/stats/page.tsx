@@ -23,21 +23,9 @@ import {
   Legend,
 } from "recharts";
 
-const API_BASE = "/api/admin";
+const API_BASE = "/api/statistics";
 
 type StatView = "overnights" | "guests-structure" | "addons";
-
-const getErrorMessage = async (res: Response) => {
-  if (res.status === 401) return "❌ Niste prijavljeni.";
-  if (res.status === 403) return "⛔ Nemate ovlasti.";
-  if (res.status === 404) return "🔍 Backend ruta nije pronađena (404).";
-  try {
-    const data = await res.json();
-    return data?.detail || data?.message || "⚠️ Greška pri dohvaćanju.";
-  } catch {
-    return "⚠️ Greška na poslužitelju.";
-  }
-};
 
 export default function StatisticsPage() {
   const [activeView, setActiveView] = useState<StatView>("overnights");
@@ -58,20 +46,20 @@ export default function StatisticsPage() {
 
   useEffect(() => {
     fetchStatistics();
-  }, [startDate, endDate, activeView]);
+  }, [startDate, endDate]);
 
   const fetchStatistics = async () => {
     setLoading(true);
     setMessage("");
     try {
       const params = new URLSearchParams({ startDate, endDate });
-      const res = await fetch(`${API_BASE}/stats/${activeView}?${params}`);
+      const res = await fetch(`${API_BASE}?${params}`);
 
       if (res.ok) {
         const data = await res.json();
         setStatsData(data);
       } else {
-        setMessage(await getErrorMessage(res));
+        setMessage("⚠️ Greška pri dohvaćanju podataka.");
         setStatsData(null);
       }
     } catch (err) {
@@ -83,17 +71,13 @@ export default function StatisticsPage() {
   };
 
   const handleExport = (format: "pdf" | "xml" | "xlsx") => {
-    const params = new URLSearchParams({
-      type: activeView,
-      format: format,
-      from: startDate,
-      to: endDate,
-    });
-    window.open(`${API_BASE}/exports/stats?${params}`, "_blank");
+    const params = new URLSearchParams({ startDate, endDate });
+    const exportPath = `${API_BASE}/export/${format}`;
+    window.open(`${exportPath}?${params}`, "_blank");
   };
 
   return (
-    <div className="dashboard-main p-6 space-y-6 text-white bg-[#050505] min-h-screen">
+    <div className="dashboard-main p-6 space-y-6 text-white bg-[#050505] min-h-screen font-sans">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#262626] pb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white">
@@ -111,14 +95,14 @@ export default function StatisticsPage() {
             <button
               key={f}
               onClick={() => handleExport(f as any)}
-              className="btn-secondary text-[11px] px-3 py-2 flex items-center gap-2 border border-[#262626] rounded-lg bg-[#0f0f0f] hover:bg-[#1a1a1a]"
+              className="btn-secondary text-[11px] px-3 py-2 flex items-center gap-2 border border-[#262626] rounded-lg bg-[#0f0f0f] hover:bg-[#1a1a1a] transition-all"
             >
               <Download size={14} /> {f.toUpperCase()}
             </button>
           ))}
           <button
             onClick={fetchStatistics}
-            className="btn-secondary p-2 border border-[#262626] rounded-lg bg-[#0f0f0f]"
+            className="btn-secondary p-2 border border-[#262626] rounded-lg bg-[#0f0f0f] hover:bg-[#1a1a1a]"
           >
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
           </button>
@@ -159,13 +143,13 @@ export default function StatisticsPage() {
           <div className="flex gap-2">
             <input
               type="date"
-              className="bg-[#050505] border border-[#262626] rounded-lg px-3 py-1.5 text-sm outline-none focus:border-emerald-500/50"
+              className="bg-[#050505] border border-[#262626] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-emerald-500/50"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
             <input
               type="date"
-              className="bg-[#050505] border border-[#262626] rounded-lg px-3 py-1.5 text-sm outline-none focus:border-emerald-500/50"
+              className="bg-[#050505] border border-[#262626] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-emerald-500/50"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
             />
@@ -306,7 +290,7 @@ export default function StatisticsPage() {
         <div className="h-[400px] flex flex-col items-center justify-center border border-dashed border-[#262626] rounded-xl bg-[#0f0f0f]/50">
           <AlertCircle className="text-gray-600 mb-2" size={32} />
           <p className="text-gray-500 text-sm">
-            Podaci nisu dostupni na serveru.
+            Podaci nisu dostupni za odabrani period.
           </p>
         </div>
       )}
