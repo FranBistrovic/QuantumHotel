@@ -10,6 +10,8 @@ export interface Column<T> {
   render?: (value: any, row: T) => React.ReactNode;
 }
 
+export type SortDirection = "asc" | "desc";
+
 interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
@@ -20,6 +22,7 @@ interface DataTableProps<T> {
   onRowClick?: (row: T) => void;
   actions?: boolean;
   className?: string;
+  onSort?: (key: keyof T, direction: SortDirection) => void;
 }
 
 export function DataTable<T extends { id: string | number }>({
