@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   Calendar,
+  User,
   Home,
   Layers,
   Package,
@@ -20,8 +21,10 @@ type Role = "user" | "staff" | "admin";
 
 export function DashboardLayout({
   children,
+  isStaff,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode,
+  isStaff: boolean;
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -44,10 +47,8 @@ export function DashboardLayout({
   /* -------------------------------------------------
    NAVIGACIJA – ISTA KAO TVOJA
   ------------------------------------------------- */
-  const navigation = [
-    { name: "Rezervacije", href: `${prefix}/reservations`, icon: Calendar }
-  ];
-
+  
+  const navigation =[ {name: "Rezervacije", href: `${prefix}/reservations`, icon: Calendar }];
 
   if (role === "admin" || role === "staff") {
     navigation.push(
@@ -77,7 +78,8 @@ export function DashboardLayout({
   if (role === "admin") {
     navigation.push(
       { name: "Korisnici", href: "/admin/users", icon: Users },
-      { name: "Statistika", href: "/admin/stats", icon: BarChart3 }
+      { name: "Statistika", href: "/admin/stats", icon: BarChart3 },
+      { name: "Location", href: "/admin/location", icon: Package }
     );
   }
 

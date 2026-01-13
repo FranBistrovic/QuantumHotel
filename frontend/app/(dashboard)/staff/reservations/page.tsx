@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useEffect, useMemo } from "react";
 import { DataTable, Column } from "../../../components/DataTable";
 import { Pagination } from "../../../components/Pagination";
 import { FilterBar } from "../../../components/FilterBar";
@@ -9,20 +8,30 @@ import { Modal } from "../../../components/Modal";
 
 interface Reservation {
   id: number;
-  user: {
-    id?: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  room: {
-    id: number;
-    roomNumber: string;
-  } | null;
+  userId: number;
   dateFrom: string;
   dateTo: string;
   status: "PENDING" | "CONFIRMED" | "REJECTED";
-  totalPrice: number;
+
+  categoryName: string;
+  categoryId: number;
+  categoryPrice: number;
+
+  unitNumber: number | null;
+
+  amenities: {
+    id: number;
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
+}
+
+interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
 }
 
 const statusLabels = {
@@ -36,14 +45,14 @@ const getErrorMessage = async (response: Response) => {
   if (response.status === 403) return "⛔ Nemate ovlasti.";
   try {
     const data = await response.json();
-    return data?.message || "⚠️ Greška na serveru.";
+    return data?.detail || "⚠️ Greška na serveru.";
   } catch {
     return "⚠️ Pogreška.";
   }
 };
 
 export default function StaffReservationsPage() {
-  const apiBase = "/api/admin" ;
+  const apiBase = "/api/admin";
 
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,16 +62,63 @@ export default function StaffReservationsPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Dodana konfiguracija za sortiranje
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof Reservation;
+    direction: "asc" | "desc";
+  } | null>(null);
+
   const itemsPerPage = 10;
 
   useEffect(() => {
     fetchReservations();
   }, []);
 
+  const fetchUserById = async (
+    id: number
+  ): Promise<User | undefined> => {
+    try {
+      const response = await fetch(`/api/admin/users/${id}`);
+      if (!response.ok) return undefined;
+      const data: User = await response.json();
+      return data;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const UserCell = ({ userId }: { userId: number }) => {
+    const [user, setUser] = useState<User | null>(null);
+
+    useEffect(() => {
+      let mounted = true;
+
+      fetchUserById(userId)
+        .then((u) => {
+          if (mounted) setUser(u ?? null);
+        })
+        .catch(() => { });
+
+      return () => {
+        mounted = false;
+      };
+    }, [userId]);
+    return (
+      <div className="flex flex-col py-1">
+        <span className="font-bold text-white text-sm">
+          {user?.firstName || "Nepoznat"} {user?.lastName || "Gost"}
+        </span>
+        <span className="text-[11px] text-gray-500">
+          {user?.email || "Nema e-maila"}
+        </span>
+      </div>
+    );
+  };
+
   const fetchReservations = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${apiBase}/reservations?t=${Date.now()}`);
+      const response = await fetch(`${apiBase}/reservations`);
       if (response.ok) {
         const data = await response.json();
         setReservations(Array.isArray(data) ? data : []);
@@ -73,31 +129,6 @@ export default function StaffReservationsPage() {
       setMessage("⚠️ Veza odbijena.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!formData) return;
-    try {
-      const response = await fetch(`${apiBase}/reservations/${formData.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          dateFrom: formData.dateFrom,
-          dateTo: formData.dateTo,
-        }),
-      });
-
-      if (response.ok) {
-        await fetchReservations();
-        setMessage("✅ Rezervacija ažurirana!");
-        setFormData(null);
-        setTimeout(() => setMessage(""), 3000);
-      } else {
-        setMessage(await getErrorMessage(response));
-      }
-    } catch {
-      setMessage("⚠️ Greška pri spremanju.");
     }
   };
 
@@ -123,19 +154,68 @@ export default function StaffReservationsPage() {
     }
   };
 
-  const filteredData = reservations.filter((res) => {
-    const search = searchTerm.toLowerCase();
-    const guestName = `${res.user?.firstName || ""} ${
-      res.user?.lastName || ""
-    }`.toLowerCase();
-    const roomNum = res.room?.roomNumber?.toLowerCase() || "";
-    return (
-      (guestName.includes(search) || roomNum.includes(search)) &&
-      (statusFilter === "all" || res.status === statusFilter)
-    );
-  });
+  const handleSave = async () => {
+    if (!formData) return;
+    try {
+      const response = await fetch(`/api/reservations/${formData.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dateFrom: formData.dateFrom,
+          dateTo: formData.dateTo,
+        }),
+      });
 
-  const paginatedData = filteredData.slice(
+      if (response.ok) {
+        await fetchReservations();
+        setMessage("✅ Rezervacija ažurirana!");
+        setFormData(null);
+        setTimeout(() => setMessage(""), 3000);
+      } else {
+        setMessage(await getErrorMessage(response));
+      }
+    } catch {
+      setMessage("⚠️ Greška pri spremanju.");
+    }
+  };
+
+  // Filtriranje i sortiranje podataka
+  const processedData = useMemo(() => {
+    let result = reservations.filter((res) => {
+      const search = searchTerm.toLowerCase();
+      const guestName = "";
+      const roomNum = "SOBA " + res.unitNumber || "";
+      return (
+        (guestName.includes(search) || roomNum.toString().toLowerCase().includes(search)) &&
+        (statusFilter === "all" || res.status === statusFilter)
+      );
+    });
+
+    // if (sortConfig) {
+    //   result.sort((a: any, b: any) => {
+    //     let aVal, bVal;
+
+    //     // Posebno rukovanje za objekte (Gost i Soba)
+    //     if (sortConfig.key === "user") {
+    //       aVal = `${a.user?.firstName} ${a.user?.lastName}`;
+    //       bVal = `${b.user?.firstName} ${b.user?.lastName}`;
+    //     } else if (sortConfig.key === "room") {
+    //       aVal = a.room?.roomNumber || "";
+    //       bVal = b.room?.roomNumber || "";
+    //     } else {
+    //       aVal = a[sortConfig.key] ?? "";
+    //       bVal = b[sortConfig.key] ?? "";
+    //     }
+
+    //     if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+    //     if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+    //     return 0;
+    //   });
+    // }
+    return result;
+  }, [reservations, searchTerm, statusFilter, sortConfig]);
+
+  const paginatedData = processedData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -145,43 +225,74 @@ export default function StaffReservationsPage() {
       label: "Gost",
       key: "user",
       sortable: true,
-      render: (_, row) => (
-        <div className="flex flex-col">
-          <span className="font-medium text-white">
-            {row.user?.firstName} {row.user?.lastName}
-          </span>
-          <span className="text-xs text-gray-400">{row.user?.email}</span>
-        </div>
-      ),
+      render: (_, row) => <UserCell userId={row.userId} />,
     },
     {
       label: "Soba",
       key: "room",
       sortable: true,
-      render: (room) => (
-        <span className="text-gray-300 font-mono bg-[#1a1a1a] px-2 py-1 rounded border border-[#262626]">
-          {room?.roomNumber || "---"}
+      render: (_, row) => (
+        <div className="flex items-center">
+          <span className="text-gray-300 font-mono bg-[#1a1a1a] px-2.5 py-1 rounded-md border border-[#262626] text-xs">
+            {row.unitNumber ? `SOBA ${row.unitNumber}` : "---"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      label: "Dolazak",
+      key: "dateFrom",
+      sortable: true,
+      render: (val) => (
+        <span className="text-gray-400 text-sm font-medium">
+          {String(val).split("T")[0]}
         </span>
       ),
     },
-    { label: "Dolazak", key: "dateFrom", sortable: true },
-    { label: "Odlazak", key: "dateTo", sortable: true },
+    {
+      label: "Odlazak",
+      key: "dateTo",
+      sortable: true,
+      render: (val) => (
+        <span className="text-gray-400 text-sm font-medium">
+          {String(val).split("T")[0]}
+        </span>
+      ),
+    },
     {
       label: "Status",
       key: "status",
+      sortable: true,
       render: (value: keyof typeof statusLabels) => (
-        <span className={`status-badge badge-${value?.toLowerCase()}`}>
+        <span className={`status-badge badge-${String(value).toLowerCase()}`}>
           {statusLabels[value] || value}
         </span>
       ),
     },
     {
       label: "Iznos",
-      key: "totalPrice",
+      key: "categoryPrice",
       sortable: true,
-      render: (val) => (
-        <span className="text-emerald-400 font-semibold">{val} €</span>
-      ),
+      render: (_, row) => {
+        const start = new Date(row.dateFrom);
+        const end = new Date(row.dateTo);
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const nights = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / msPerDay));
+
+        // Sum amenities
+        const amenitiesTotal = row.amenities?.reduce(
+          (sum, a) => sum + a.price * a.quantity,
+          0
+        ) || 0;
+
+        const total = (row.categoryPrice + amenitiesTotal) * nights;
+
+        return (
+          <span className="text-emerald-400 font-bold">
+            {total.toFixed(2)} €
+          </span>
+        );
+      },
     },
   ];
 
@@ -194,9 +305,8 @@ export default function StaffReservationsPage() {
           </h1>
           {message && (
             <p
-              className={`text-xs mt-2 font-medium ${
-                message.includes("✅") ? "text-emerald-400" : "text-red-400"
-              }`}
+              className={`text-xs mt-2 font-medium ${message.includes("✅") ? "text-emerald-400" : "text-red-400"
+                }`}
             >
               {message}
             </p>
@@ -204,14 +314,14 @@ export default function StaffReservationsPage() {
         </div>
       </div>
 
-      <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl p-4">
+      <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl p-4 shadow-sm">
         <FilterBar
           searchValue={searchTerm}
           onSearchChange={setSearchTerm}
           searchPlaceholder="Traži gosta ili sobu..."
         >
           <select
-            className="filter-input bg-[#141414] text-white border-[#262626] rounded-lg h-[40px] px-3"
+            className="filter-input bg-[#141414] text-white border-[#262626] rounded-lg h-[40px] px-3 outline-none focus:border-emerald-500/50 transition-colors"
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
@@ -228,14 +338,25 @@ export default function StaffReservationsPage() {
 
       <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl overflow-hidden shadow-2xl">
         {loading ? (
-          <div className="p-10 text-center text-gray-500">Učitavanje...</div>
+          <div className="p-10 text-center text-gray-500 animate-pulse font-medium">
+            Učitavanje...
+          </div>
         ) : (
-          <DataTable
+          <DataTable<Reservation>
             data={paginatedData}
             columns={columns}
-            onEdit={(row) => setFormData({ ...row })}
+            onEdit={(row) =>
+              setFormData({
+                ...row,
+                dateFrom: row.dateFrom.split("T")[0],
+                dateTo: row.dateTo.split("T")[0],
+              })
+            }
             onConfirm={(row) => updateStatusAction(row.id, "confirm")}
             onReject={(row) => updateStatusAction(row.id, "reject")}
+            // onSort={(key, direction) =>
+            //   setSortConfig({ key: key as keyof Reservation, direction })
+            // }
             className="data-table"
           />
         )}
@@ -244,10 +365,10 @@ export default function StaffReservationsPage() {
       <div className="flex justify-center pt-2">
         <Pagination
           currentPage={currentPage}
-          totalPages={Math.ceil(filteredData.length / itemsPerPage) || 1}
+          totalPages={Math.ceil(processedData.length / itemsPerPage) || 1}
           onPageChange={setCurrentPage}
           itemsPerPage={itemsPerPage}
-          totalItems={filteredData.length}
+          totalItems={processedData.length}
         />
       </div>
 
@@ -255,16 +376,6 @@ export default function StaffReservationsPage() {
         isOpen={!!formData}
         onClose={() => setFormData(null)}
         title="Uredi rezervaciju"
-        footer={
-          <div className="flex gap-3 justify-end w-full border-t border-[#262626] pt-4 mt-4">
-            <button className="btn-secondary" onClick={() => setFormData(null)}>
-              Odustani
-            </button>
-            <button className="btn-primary px-6" onClick={handleSave}>
-              Spremi promjene
-            </button>
-          </div>
-        }
       >
         {formData && (
           <div className="space-y-5 py-2">
@@ -295,6 +406,17 @@ export default function StaffReservationsPage() {
                   }
                 />
               </div>
+            </div>
+            <div className="flex gap-3 justify-end w-full border-t border-[#262626] pt-4 mt-4">
+              <button
+                className="btn-secondary"
+                onClick={() => setFormData(null)}
+              >
+                Odustani
+              </button>
+              <button className="btn-primary px-6" onClick={handleSave}>
+                Spremi promjene
+              </button>
             </div>
           </div>
         )}

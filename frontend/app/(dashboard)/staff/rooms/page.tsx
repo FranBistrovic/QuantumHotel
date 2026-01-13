@@ -1,73 +1,99 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
-import { DataTable, Column } from "../../../components/DataTable";
-import { Pagination } from "../../../components/Pagination";
-import { FilterBar } from "../../../components/FilterBar";
-import { Modal } from "../../../components/Modal";
-import { Plus } from "lucide-react";
+import { useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
+import { DataTable, type Column } from "../../../components/DataTable"
+import { Pagination } from "../../../components/Pagination"
+import { FilterBar } from "../../../components/FilterBar"
+import { Modal } from "../../../components/Modal"
+import { Plus } from "lucide-react"
 
 interface Room {
-  id: number;
-  roomNumber: number;
-  floor: number;
-  isCleaned: boolean;
-  underMaintenance: boolean;
-  categoryId: number;
-  categoryName?: string;
+  id: number
+  roomNumber: number
+  floor: number
+  isCleaned: boolean
+  underMaintenance: boolean
+  categoryId: number
+  categoryName?: string
+}
+
+interface Category {
+  id: number
+  name: string
+  unitsNumber: number
+  capacity: number
+  twinBeds: boolean
+  price: number
+  checkInTime: string
+  checkOutTime: string
 }
 
 const getErrorMessage = async (response: Response) => {
-  if (response.status === 401) return "❌ Niste prijavljeni.";
-  if (response.status === 403) return "⛔ Nemate ovlasti.";
+  if (response.status === 401) return "❌ Niste prijavljeni."
+  if (response.status === 403) return "⛔ Nemate ovlasti."
   try {
-    const data = await response.json();
-    return data?.message || "⚠️ Greška na serveru.";
+    const data = await response.json()
+    return data?.detail || "⚠️ Greška na serveru."
   } catch {
-    return "⚠️ Pogreška.";
+    return "⚠️ Pogreška."
   }
-};
+}
 
 export default function RoomsPage() {
-  const pathname = usePathname();
-  const apiBase = "/api";
+  const pathname = usePathname()
+  const apiBase = "/api"
 
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [formData, setFormData] = useState<Partial<Room> | null>(null);
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [rooms, setRooms] = useState<Room[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [formData, setFormData] = useState<Partial<Room> | null>(null)
+  const [message, setMessage] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  const itemsPerPage = 10;
+  const itemsPerPage = 10
 
   useEffect(() => {
-    fetchRooms();
-  }, []);
+    fetchRooms()
+    fetchCategories() // Fetch categories from separate endpoint
+  }, [])
 
   const fetchRooms = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const response = await fetch(`${apiBase}/rooms?t=${Date.now()}`);
+      const response = await fetch(`${apiBase}/rooms?t=${Date.now()}`)
       if (response.ok) {
-        const data = await response.json();
-        setRooms(Array.isArray(data) ? data : []);
+        const data = await response.json()
+        const roomsData = Array.isArray(data) ? data : []
+        setRooms(roomsData)
       } else {
-        setMessage(await getErrorMessage(response));
+        setMessage(await getErrorMessage(response))
       }
     } catch {
-      setMessage("⚠️ Veza odbijena.");
+      setMessage("⚠️ Veza odbijena.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(`${apiBase}/room-categories?t=${Date.now()}`)
+      if (response.ok) {
+        const data = await response.json()
+        setCategories(Array.isArray(data) ? data : [])
+      }
+    } catch {
+      console.error("Failed to fetch categories")
+    }
+  }
 
   const handleSave = async () => {
-    if (!formData) return;
-    const isNew = !formData.id;
-    const url = isNew ? `${apiBase}/rooms` : `${apiBase}/rooms/${formData.id}`;
-    const method = isNew ? "POST" : "PATCH";
+    if (!formData) return
+    const isNew = !formData.id
+    const url = isNew ? `${apiBase}/rooms` : `${apiBase}/rooms/${formData.id}`
+    const method = isNew ? "POST" : "PATCH"
 
     try {
       const response = await fetch(url, {
@@ -80,46 +106,41 @@ export default function RoomsPage() {
           underMaintenance: formData.underMaintenance === true,
           categoryId: Number(formData.categoryId),
         }),
-      });
+      })
 
       if (response.ok) {
-        await fetchRooms();
-        setFormData(null);
-        setMessage("✅ Soba spremljena!");
-        setTimeout(() => setMessage(""), 3000);
+        await fetchRooms()
+        setFormData(null)
+        setMessage("✅ Soba spremljena!")
+        setTimeout(() => setMessage(""), 3000)
       } else {
-        setMessage(await getErrorMessage(response));
+        setMessage(await getErrorMessage(response))
       }
     } catch {
-      setMessage("⚠️ Greška pri spremanju.");
+      setMessage("⚠️ Greška pri spremanju.")
     }
-  };
+  }
 
   const handleDelete = async (row: Room) => {
-    if (!confirm(`Obriši sobu ${row.roomNumber}?`)) return;
+    if (!confirm(`Obriši sobu ${row.roomNumber}?`)) return
     try {
       const response = await fetch(`${apiBase}/rooms/${row.id}`, {
         method: "DELETE",
-      });
+      })
       if (response.ok) {
-        setRooms(rooms.filter((r) => r.id !== row.id));
-        setMessage("✅ Soba obrisana.");
-        setTimeout(() => setMessage(""), 3000);
+        setRooms(rooms.filter((r) => r.id !== row.id))
+        setMessage("✅ Soba obrisana.")
+        setTimeout(() => setMessage(""), 3000)
       } else {
-        setMessage(await getErrorMessage(response));
+        setMessage(await getErrorMessage(response))
       }
     } catch {
-      setMessage("⚠️ Greška.");
+      setMessage("⚠️ Greška.")
     }
-  };
+  }
 
-  const filteredData = rooms.filter((r) =>
-    r.roomNumber.toString().includes(searchTerm)
-  );
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const filteredData = rooms.filter((r) => r.roomNumber.toString().includes(searchTerm))
+  const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const columns: Column<Room>[] = [
     { key: "roomNumber", label: "Broj sobe", sortable: true },
@@ -129,39 +150,25 @@ export default function RoomsPage() {
       key: "isCleaned",
       label: "Čišćenje",
       render: (v) => (
-        <span
-          className={`status-badge ${v ? "badge-confirmed" : "badge-pending"}`}
-        >
-          {v ? "Čisto" : "Prljavo"}
-        </span>
+        <span className={`status-badge ${v ? "badge-confirmed" : "badge-pending"}`}>{v ? "Čisto" : "Prljavo"}</span>
       ),
     },
     {
       key: "underMaintenance",
       label: "Održavanje",
       render: (v) => (
-        <span
-          className={`status-badge ${v ? "badge-rejected" : "badge-confirmed"}`}
-        >
-          {v ? "Kvar" : "Ispravno"}
-        </span>
+        <span className={`status-badge ${v ? "badge-rejected" : "badge-confirmed"}`}>{v ? "Kvar" : "Ispravno"}</span>
       ),
     },
-  ];
+  ]
 
   return (
     <div className="dashboard-main p-6 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#262626] pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Upravljanje sobama
-          </h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Upravljanje sobama</h1>
           {message && (
-            <p
-              className={`text-xs mt-2 font-medium ${
-                message.includes("✅") ? "text-emerald-400" : "text-red-400"
-              }`}
-            >
+            <p className={`text-xs mt-2 font-medium ${message.includes("✅") ? "text-emerald-400" : "text-red-400"}`}>
               {message}
             </p>
           )}
@@ -174,7 +181,7 @@ export default function RoomsPage() {
               floor: 0,
               isCleaned: true,
               underMaintenance: false,
-              categoryId: 1,
+              categoryId: categories[0]?.id || 1,
             })
           }
         >
@@ -232,9 +239,7 @@ export default function RoomsPage() {
         {formData && (
           <div className="space-y-4 py-2">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Broj sobe
-              </label>
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Broj sobe</label>
               <input
                 className="input-field"
                 type="number"
@@ -249,25 +254,18 @@ export default function RoomsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Kat
-                </label>
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Kat</label>
                 <input
                   className="input-field"
                   type="number"
                   value={formData.floor || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, floor: Number(e.target.value) })
-                  }
+                  onChange={(e) => setFormData({ ...formData, floor: Number(e.target.value) })}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  ID Kategorije
-                </label>
-                <input
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Kategorija</label>
+                <select
                   className="input-field"
-                  type="number"
                   value={formData.categoryId || ""}
                   onChange={(e) =>
                     setFormData({
@@ -275,14 +273,19 @@ export default function RoomsPage() {
                       categoryId: Number(e.target.value),
                     })
                   }
-                />
+                >
+                  <option value="">Odaberi kategoriju</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Čišćenje
-                </label>
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Čišćenje</label>
                 <select
                   className="input-field"
                   value={formData.isCleaned ? "true" : "false"}
@@ -298,9 +301,7 @@ export default function RoomsPage() {
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Održavanje
-                </label>
+                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Održavanje</label>
                 <select
                   className="input-field"
                   value={formData.underMaintenance ? "true" : "false"}
@@ -320,5 +321,5 @@ export default function RoomsPage() {
         )}
       </Modal>
     </div>
-  );
+  )
 }

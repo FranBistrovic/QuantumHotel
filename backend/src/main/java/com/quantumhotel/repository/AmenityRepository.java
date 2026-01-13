@@ -16,7 +16,7 @@ public interface AmenityRepository extends JpaRepository<Amenity, Long> {
             "JOIN ra.amenity a " +
             "JOIN ra.reservation r " +
             "WHERE r.dateFrom >= :startDate AND r.dateTo <= :endDate " +
-            "AND r.status = 'COMPLETED' " +
+            "AND r.status = 'CONFIRMED' " +
             "GROUP BY a.Id, a.name " +
             "ORDER BY SUM(ra.quantity) DESC")
     List<Object[]> findPopularAmenities(

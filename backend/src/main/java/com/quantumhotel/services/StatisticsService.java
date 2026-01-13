@@ -43,12 +43,13 @@ public class StatisticsService {
         stats.setTotalReservations(reservations.size());
 
         long completedCount = reservations.stream()
-                .filter(r -> "COMPLETED".equals(r[5])) // res_status
+                .filter(r -> "CONFIRMED".equals(r[5].toString())) // res_status
                 .count();
+        System.out.println(completedCount);
         stats.setCompletedReservations((int) completedCount);
 
         long cancelledCount = reservations.stream()
-                .filter(r -> "CANCELLED".equals(r[5]))
+                .filter(r -> "REJECTED".equals(r[5].toString()))
                 .count();
         stats.setCancelledReservations((int) cancelledCount);
 
@@ -83,9 +84,9 @@ public class StatisticsService {
         return stats;
     }
 
-    private BigDecimal calculateTotalRevenue(List<Object[]> reservations) {
+        private BigDecimal calculateTotalRevenue(List<Object[]> reservations) {
         return reservations.stream()
-                .filter(r -> "COMPLETED".equals(r[5]))
+                .filter(r -> "CONFIRMED".equals(r[5].toString()))
                 .map(r -> (BigDecimal) r[8]) // Assuming price is at index 7
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -120,7 +121,7 @@ public class StatisticsService {
 
     private Map<String, Integer> groupReservationsByGender(List<Object[]> reservations) {
         return reservations.stream()
-                .map(r -> (String) r[7]) // usr_gender
+                .map(r -> r[7] != null ? r[7].toString() : "UNKNOWN") // usr_gender
                 .filter(Objects::nonNull)
                 .collect(Collectors.groupingBy(
                         gender -> gender,
