@@ -236,7 +236,7 @@ export default function RootLayout({
               })}
 
               {user && (
-                <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
+                <>
                   {isStaff && (
                     <Link
                       href="/staff"
@@ -257,7 +257,7 @@ export default function RootLayout({
                       <span className="text-sm font-medium">Admin panel</span>
                     </Link>
                   )}
-                </div>
+                </>
               )}
             </div>
 

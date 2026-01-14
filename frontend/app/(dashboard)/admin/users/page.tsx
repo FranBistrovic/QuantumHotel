@@ -73,38 +73,38 @@ export default function UsersPage() {
     const isNew = !formData.id || formData.id === 0;
 
     try {
-      const payload = {
-        ...formData,
-        username: formData.username,
-        password: isNew ? "Test1234" : undefined,
-        provider: isNew ? "LOCAL" : undefined,
-        enabled: formData.enabled === true,
-        accountNonLocked: formData.enabled === true,
-      };
-
       if (isNew) {
         const res = await fetch("/api/admin/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({
+            ...formData,
+            password: "Test1234",
+            provider: "LOCAL",
+            enabled: formData.enabled ?? true,
+            accountNonLocked: formData.enabled ?? true,
+          }),
         });
-        if (!res.ok) throw new Error("Neuspješno kreiranje");
+        if (!res.ok) throw new Error("Neuspješno kreiranje korisnika");
       } else {
+        const originalUser = users.find((u) => u.id === formData.id);
+        const { role, ...basicData } = formData;
+
         const res = await fetch(`/api/admin/users/${formData.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(basicData),
         });
-        if (!res.ok) throw new Error("Neuspješno ažuriranje");
+        if (!res.ok) throw new Error("Neuspješno ažuriranje profila");
 
-        const originalUser = users.find((u) => u.id === formData.id);
-        if (originalUser && originalUser.role !== formData.role) {
+        if (originalUser && originalUser.role !== role) {
           const roleRes = await fetch(`/api/admin/users/${formData.id}/role`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ role: formData.role }),
+            body: JSON.stringify({ role }),
           });
-          if (!roleRes.ok) throw new Error("Greška pri promjeni uloge");
+          if (!roleRes.ok)
+            throw new Error("Profil ažuriran, ali promjena uloge nije uspjela");
         }
       }
 
@@ -113,7 +113,7 @@ export default function UsersPage() {
       setFormData(null);
       setTimeout(() => setMessage(""), 3000);
     } catch (err: any) {
-      setMessage(`❌ ${err.message || "Greška pri komunikaciji s API-jem"}`);
+      setMessage(`❌ ${err.message || "Greška pri spremanju"}`);
     }
   };
 
@@ -172,7 +172,7 @@ export default function UsersPage() {
           <div className="h-10 w-10 rounded-full bg-[#1a1a1a] border border-[#262626] overflow-hidden flex-shrink-0">
             {row.imageUrl ? (
               <img
-                src={getAvatarUrl(row.imageUrl)!}
+                src={getAvatarUrl(row.imageUrl)}
                 alt=""
                 className="h-full w-full object-cover"
               />
