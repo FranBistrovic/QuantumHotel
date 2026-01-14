@@ -35,21 +35,15 @@ const poppins = Poppins({
 
 const hasRole = (user: any, roleName: "STAFF" | "ADMIN") => {
   if (!user) return false;
-
   if (typeof user.role === "string") {
     return user.role.toUpperCase() === roleName;
   }
-
   if (Array.isArray(user.roles)) {
-    return user.roles.some(
-      (r: any) => r?.name?.toUpperCase() === roleName
-    );
+    return user.roles.some((r: any) => r?.name?.toUpperCase() === roleName);
   }
-
   if (Array.isArray(user.authorities)) {
     return user.authorities.includes(roleName);
   }
-
   return false;
 };
 
@@ -105,9 +99,7 @@ export default function RootLayout({
       lastName: user.lastName || "",
       email: user.email || "",
       city: user.city || "",
-      dateOfBirth: user.dateOfBirth
-        ? user.dateOfBirth.split("T")[0]
-        : "",
+      dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split("T")[0] : "",
       gender: user.gender || "",
     });
     setIsEditing(true);
@@ -118,19 +110,16 @@ export default function RootLayout({
     if (!user) return;
 
     const body: any = {};
-
     if (form.firstName !== user.firstName) body.firstName = form.firstName;
     if (form.lastName !== user.lastName) body.lastName = form.lastName;
     if (form.email !== user.email) body.email = form.email;
     if (form.city !== user.city) body.city = form.city;
-
     if (
       form.dateOfBirth &&
       form.dateOfBirth !== user.dateOfBirth?.split("T")[0]
     ) {
       body.dateOfBirth = form.dateOfBirth;
     }
-
     if (form.gender !== user.gender) body.gender = form.gender;
 
     if (Object.keys(body).length === 0) {
@@ -149,7 +138,6 @@ export default function RootLayout({
       alert("Email ili korisničko ime već postoji.");
       return;
     }
-
     if (!res.ok) {
       alert("Greška pri spremanju profila.");
       return;
@@ -171,10 +159,14 @@ export default function RootLayout({
   };
 
   const navigation = [
-     { name: "Rezervacije", href: `${prefix}/reservations`, icon: Calendar },
-     { name: "Kategorije soba", href: `${prefix}/room-categories`, icon: Layers },
-     { name: "Članci", href: `${prefix}/articles`, icon: FileText },
-     { name: "FAQ", href: `${prefix}/faq`, icon: HelpCircle },
+    { name: "Rezervacije", href: `${prefix}/reservations`, icon: Calendar },
+    {
+      name: "Kategorije soba",
+      href: `${prefix}/room-categories`,
+      icon: Layers,
+    },
+    { name: "Članci", href: `${prefix}/articles`, icon: FileText },
+    { name: "FAQ", href: `${prefix}/faq`, icon: HelpCircle },
   ];
 
   return (
@@ -182,7 +174,13 @@ export default function RootLayout({
       <body
         className={`${playfair.variable} ${poppins.variable} bg-black text-white flex min-h-screen`}
       >
-        {/* SIDEBAR */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         <aside
           className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 lg:translate-x-0 lg:static ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -194,6 +192,15 @@ export default function RootLayout({
             flexDirection: "column",
           }}
         >
+          <div className="lg:hidden absolute top-4 right-4">
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="bg-transparent border-none text-white/70 hover:text-white cursor-pointer"
+            >
+              <X size={24} />
+            </button>
+          </div>
+
           <div className="p-8 text-center border-b border-white/5">
             <Link href="/" onClick={() => setSidebarOpen(false)}>
               <div className="relative w-24 h-24 mx-auto mb-4">
@@ -202,25 +209,25 @@ export default function RootLayout({
                   alt="Logo"
                   fill
                   priority
-                  className="rounded-full border-2 border-[#D4AF37] object-cover "
+                  className="rounded-full border-2 border-[#D4AF37] object-cover"
                 />
               </div>
-              <h1 className="text-xl font-bold tracking-widest uppercase font-playfair">
+              <h1 className="text-xl font-bold tracking-widest uppercase font-playfair text-white">
                 Quantum Hotel
               </h1>
             </Link>
           </div>
 
           <nav className="flex-1 overflow-y-auto py-6 px-4">
-            <div className="space-y-2 ">
+            <div className="space-y-2">
               {navigation.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href;
                 return (
                   <Link
                     key={item.name}
                     href={item.href}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-white no-underline"
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-white hover:bg-white/5 no-underline transition-colors"
                   >
                     <Icon size={18} />
                     <span className="text-sm font-medium">{item.name}</span>
@@ -228,30 +235,30 @@ export default function RootLayout({
                 );
               })}
 
-                      {user && (
-            <div className="mb-6 space-y-2">
-              {isStaff && (
-                <Link
-                  href="/staff"
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-white no-underline"
-                >
-                  <Users size={18} />
-                  <span className="text-sm font-medium">Staff panel</span>
-                </Link>
+              {user && (
+                <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
+                  {isStaff && (
+                    <Link
+                      href="/staff"
+                      onClick={() => setSidebarOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-white no-underline hover:bg-white/5 transition-colors"
+                    >
+                      <Users size={18} />
+                      <span className="text-sm font-medium">Staff panel</span>
+                    </Link>
+                  )}
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setSidebarOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-white no-underline hover:bg-white/5 transition-colors"
+                    >
+                      <BarChart3 size={18} />
+                      <span className="text-sm font-medium">Admin panel</span>
+                    </Link>
+                  )}
+                </div>
               )}
-
-              {isAdmin && (
-                <Link
-                  href="/admin"
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-white no-underline"
-                >
-                  <BarChart3 size={18} />
-                  <span className="text-sm font-medium">Admin panel</span>
-                </Link>
-              )}
-            </div>
-          )}
-
             </div>
 
             <div className="mt-10 pt-6 border-t border-white/5 space-y-1">
@@ -272,28 +279,31 @@ export default function RootLayout({
                       className="rounded-full border border-[#D4AF37]"
                       unoptimized
                     />
-                    <span className="text-sm font-semibold truncate">
+                    <span className="text-sm font-semibold truncate text-white">
                       {user.firstName}
                     </span>
                   </div>
 
                   <button
-                    onClick={openEditProfile}
-                    className="w-full text-left flex items-center gap-3 px-4 py-2 text-white/60 hover:text-white bg-transparent border-none cursor-pointer"
+                    onClick={() => {
+                      openEditProfile();
+                      setSidebarOpen(false);
+                    }}
+                    className="w-full text-left flex items-center gap-3 px-4 py-2 text-white/60 hover:text-white bg-transparent border-none cursor-pointer transition-colors"
                   >
                     <UserCircle size={18} /> Profil
                   </button>
 
                   <button
                     onClick={handleDeleteAccount}
-                    className="w-full text-left flex items-center gap-3 px-4 py-2 text-white/60 hover:text-red-400 bg-transparent border-none cursor-pointer"
+                    className="w-full text-left flex items-center gap-3 px-4 py-2 text-white/60 hover:text-red-400 bg-transparent border-none cursor-pointer transition-colors"
                   >
                     <Trash2 size={18} /> Obriši račun
                   </button>
 
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left flex items-center gap-3 px-4 py-2 bg-transparent border-none cursor-pointer font-bold"
+                    className="w-full text-left flex items-center gap-3 px-4 py-2 bg-transparent border-none cursor-pointer font-bold transition-colors"
                     style={{ color: luxuryGold }}
                   >
                     <LogOut size={18} /> Odjava
@@ -303,13 +313,15 @@ export default function RootLayout({
                 <div className="space-y-1">
                   <Link
                     href="/login"
-                    className="flex items-center gap-3 px-4 py-2 text-white/60 no-underline hover:text-white"
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-white/60 no-underline hover:text-white transition-colors"
                   >
                     <UserCircle size={18} /> Prijava
                   </Link>
                   <Link
                     href="/register"
-                    className="flex items-center gap-3 px-4 py-2 text-white/60 no-underline hover:text-white"
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2 text-white/60 no-underline hover:text-white transition-colors"
                   >
                     <FileText size={18} /> Registracija
                   </Link>
@@ -319,12 +331,11 @@ export default function RootLayout({
           </nav>
         </aside>
 
-        {/* MAIN */}
         <main className="flex-1 bg-black">
-          <div className="lg:hidden p-4">
+          <div className="lg:hidden p-4 border-b border-white/5">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="bg-transparent border-none text-white"
+              className="bg-transparent border-none text-white cursor-pointer"
             >
               <Menu size={28} />
             </button>
@@ -332,79 +343,73 @@ export default function RootLayout({
           <div className="p-4 lg:p-10">{children}</div>
         </main>
 
-        {/* MODAL */}
         {isEditing && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
             <div className="bg-[#1a1a1a] p-8 rounded-xl w-full max-w-md border border-[#D4AF37]/20 shadow-2xl text-white">
               <h2 className="text-2xl font-bold mb-6 font-playfair">
                 Uredi profil
               </h2>
-
               <form onSubmit={handleEditProfile} className="space-y-4">
                 <input
-                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none"
+                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none focus:border-[#D4AF37]/50"
                   placeholder="Ime"
                   value={form.firstName}
                   onChange={(e) =>
                     setForm({ ...form, firstName: e.target.value })
                   }
                 />
-
                 <input
-                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none"
+                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none focus:border-[#D4AF37]/50"
                   placeholder="Prezime"
                   value={form.lastName}
                   onChange={(e) =>
                     setForm({ ...form, lastName: e.target.value })
                   }
                 />
-
                 <input
                   type="email"
-                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none"
+                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none focus:border-[#D4AF37]/50"
                   placeholder="Email"
                   value={form.email}
-                  onChange={(e) =>
-                    setForm({ ...form, email: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
-
                 <input
-                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none"
+                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none focus:border-[#D4AF37]/50"
                   placeholder="Grad"
                   value={form.city}
-                  onChange={(e) =>
-                    setForm({ ...form, city: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
                 />
-
                 <input
                   type="date"
-                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none"
+                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none focus:border-[#D4AF37]/50"
                   value={form.dateOfBirth}
                   onChange={(e) =>
                     setForm({ ...form, dateOfBirth: e.target.value })
                   }
                 />
-
                 <select
-                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none"
+                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none focus:border-[#D4AF37]/50"
                   value={form.gender}
-                  onChange={(e) =>
-                    setForm({ ...form, gender: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, gender: e.target.value })}
                 >
-                  <option value="">Odaberi spol</option>
-                  <option value="MALE">Muško</option>
-                  <option value="FEMALE">Žensko</option>
-                  <option value="OTHER">Ostalo</option>
+                  <option value="" className="bg-black">
+                    Odaberi spol
+                  </option>
+                  <option value="MALE" className="bg-black">
+                    Muško
+                  </option>
+                  <option value="FEMALE" className="bg-black">
+                    Žensko
+                  </option>
+                  <option value="OTHER" className="bg-black">
+                    Ostalo
+                  </option>
                 </select>
-
                 <div className="flex justify-end gap-4 mt-8">
                   <button
                     type="button"
                     onClick={() => setIsEditing(false)}
-                    className="px-6 py-2 rounded text-white/50 bg-transparent border-none cursor-pointer"
+                    className="px-6 py-2 rounded text-white/50 bg-transparent border-none cursor-pointer hover:text-white"
                   >
                     Odustani
                   </button>

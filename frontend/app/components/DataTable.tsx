@@ -35,28 +35,13 @@ export function DataTable<T extends { id: string | number }>({
   onRowClick,
   actions = true,
   className = "",
+  onSort,
 }: DataTableProps<T>) {
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "asc" | "desc";
-  } | null>(null);
-
-  const sortedData = [...data].sort((a, b) => {
-    if (!sortConfig) return 0;
-    const aValue = a[sortConfig.key as keyof T];
-    const bValue = b[sortConfig.key as keyof T];
-    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-    return 0;
-  });
-
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const handleSort = (key: string) => {
-    setSortConfig((current) => {
-      if (current?.key === key) {
-        return current.direction === "asc" ? { key, direction: "desc" } : null;
-      }
-      return { key, direction: "asc" };
-    });
+    const newDirection = sortDirection === "asc" ? "desc" : "asc";
+    setSortDirection(newDirection);
+    if (onSort) onSort(key as keyof T, newDirection);
   };
 
   return (
@@ -77,11 +62,7 @@ export function DataTable<T extends { id: string | number }>({
                     color: "inherit",
                   }}
                 >
-                  {sortConfig?.key === col.key
-                    ? sortConfig.direction === "asc"
-                      ? "↑"
-                      : "↓"
-                    : "↕"}
+                  ↕
                 </button>
               )}
             </th>
@@ -90,10 +71,12 @@ export function DataTable<T extends { id: string | number }>({
         </tr>
       </thead>
       <tbody>
-        {sortedData.map((row, idx) => (
-          <tr key={row.id} className={idx % 2 === 0 ? "row-even" : ""}
-          onClick={() => onRowClick && onRowClick(row)} // <-- klik na cijeli redak
-          style={{ cursor: onRowClick ? "pointer" : "default" }}
+        {data.map((row, idx) => (
+          <tr
+            key={row.id}
+            className={idx % 2 === 0 ? "row-even" : ""}
+            onClick={() => onRowClick && onRowClick(row)}
+            style={{ cursor: onRowClick ? "pointer" : "default" }}
           >
             {columns.map((col) => (
               <td key={String(col.key)} data-label={col.label}>
@@ -114,7 +97,10 @@ export function DataTable<T extends { id: string | number }>({
                   {onConfirm && (
                     <button
                       className="btn-edit"
-                      onClick={(e) => { e.stopPropagation(); onConfirm(row); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onConfirm(row);
+                      }}
                       title="Potvrdi"
                     >
                       <Check size={18} />
@@ -123,7 +109,10 @@ export function DataTable<T extends { id: string | number }>({
                   {onReject && (
                     <button
                       className="btn-delete"
-                      onClick={(e) => { e.stopPropagation(); onReject(row); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onReject(row);
+                      }}
                       title="Odbij"
                     >
                       <X size={18} />
@@ -132,7 +121,10 @@ export function DataTable<T extends { id: string | number }>({
                   {onEdit && (
                     <button
                       className="btn-edit"
-                      onClick={(e) => { e.stopPropagation(); onEdit(row); }} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(row);
+                      }}
                       title="Uredi"
                     >
                       <Edit2 size={18} />
@@ -141,7 +133,10 @@ export function DataTable<T extends { id: string | number }>({
                   {onDelete && (
                     <button
                       className="btn-delete"
-                      onClick={(e) => { e.stopPropagation(); onDelete(row); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(row);
+                      }}
                       title="Obriši"
                     >
                       <Trash2 size={18} />

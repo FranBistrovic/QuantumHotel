@@ -30,7 +30,6 @@ export default function UsersPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Popravljen tip za sortiranje bez errora
   const [sortConfig, setSortConfig] = useState<{
     key: keyof User;
     direction: "asc" | "desc";
@@ -76,49 +75,45 @@ export default function UsersPage() {
     try {
       const payload = {
         ...formData,
-        username: formData.username, // Osiguravamo da se šalje za update
+        username: formData.username,
         password: isNew ? "Test1234" : undefined,
         provider: isNew ? "LOCAL" : undefined,
         enabled: formData.enabled === true,
         accountNonLocked: formData.enabled === true,
       };
 
-      let res: Response;
       if (isNew) {
-        res = await fetch("/api/admin/users", {
+        const res = await fetch("/api/admin/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+        if (!res.ok) throw new Error("Neuspješno kreiranje");
       } else {
-        res = await fetch(`/api/admin/users/${formData.id}`, {
+        const res = await fetch(`/api/admin/users/${formData.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+        if (!res.ok) throw new Error("Neuspješno ažuriranje");
 
-        // Poseban poziv za ulogu ako je promijenjena
         const originalUser = users.find((u) => u.id === formData.id);
         if (originalUser && originalUser.role !== formData.role) {
-          await fetch(`/api/admin/users/${formData.id}/role`, {
+          const roleRes = await fetch(`/api/admin/users/${formData.id}/role`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ role: formData.role }),
           });
+          if (!roleRes.ok) throw new Error("Greška pri promjeni uloge");
         }
       }
 
-      if (res.ok) {
-        await fetchUsers();
-        setMessage(isNew ? "✅ Korisnik kreiran!" : "✅ Promjene spremljene!");
-        setFormData(null);
-        setTimeout(() => setMessage(""), 3000);
-      } else {
-        const errorData = await res.json().catch(() => ({}));
-        setMessage(`❌ Greška: ${errorData.message || "Neuspješno spremanje"}`);
-      }
-    } catch (err) {
-      setMessage("⚠️ Greška pri komunikaciji s API-jem.");
+      await fetchUsers();
+      setMessage(isNew ? "✅ Korisnik kreiran!" : "✅ Promjene spremljene!");
+      setFormData(null);
+      setTimeout(() => setMessage(""), 3000);
+    } catch (err: any) {
+      setMessage(`❌ ${err.message || "Greška pri komunikaciji s API-jem"}`);
     }
   };
 
