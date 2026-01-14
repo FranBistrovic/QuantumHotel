@@ -60,11 +60,11 @@ export function DashboardLayout({
       { name: "Kategorije soba", href: `${prefix}/room-categories`, icon: Layers },
     );
 
-     if (role === "admin" || role === "staff") {
+     //if (role === "admin" || role === "staff") {
     navigation.push(
       { name: "Dodaci", href: `${prefix}/addons`, icon: Package }
     );
-  }
+ // }
 
    navigation.push(
     { name: "Članci", href: `${prefix}/articles`, icon: FileText },
