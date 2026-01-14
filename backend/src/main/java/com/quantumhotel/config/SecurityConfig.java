@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/faq/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/articles/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/support/questions").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/room-categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/room-categories/available**").permitAll()
 
                         // User reservation routes
                         .requestMatchers(HttpMethod.GET, "/api/reservations/me").authenticated()
@@ -66,6 +66,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/location").hasAnyRole("ADMIN")
 
                         //Admin/staff rooms routes
+                        .requestMatchers(HttpMethod.GET, "/api/room-categories/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers(HttpMethod.GET, "/api/rooms/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/addons/**").authenticated()
 

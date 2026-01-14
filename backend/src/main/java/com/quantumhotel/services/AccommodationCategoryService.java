@@ -43,6 +43,16 @@ public class AccommodationCategoryService {
     }
 
     public List<AccommodationCategoryDTO> getAvailableCategories(LocalDate from, LocalDate to, Integer persons) {
+        // dateFrom < dateTo
+        if (to.isBefore(from) || to.isEqual(from)) {
+            throw new IllegalArgumentException("Datum odlaska mora biti nakon datuma dolaska.");
+        }
+
+        // dateFrom > currentDate
+        if (from.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Datum dolaska ne može biti u prošlosti.");
+        }
+
         return categoryRepository.findAvailableCategories(from, to, persons)
                 .stream()
                 .map(this::toDto)
