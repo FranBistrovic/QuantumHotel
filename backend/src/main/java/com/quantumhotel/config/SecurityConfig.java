@@ -74,7 +74,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/admin/reservations/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers(HttpMethod.POST, "/api/admin/reservations/*/confirm").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers(HttpMethod.POST, "/api/admin/reservations/*/reject").hasAnyRole("ADMIN", "STAFF")
-
+                        .requestMatchers(HttpMethod.PATCH, "/api/admin/reservations/*/update").hasAnyRole("ADMIN", "STAFF")
                         // Admin-only API
                         .requestMatchers("/api/statistics/**").hasAnyRole("ADMIN","STAFF")
 
