@@ -387,24 +387,27 @@ export default function RootLayout({
                     setForm({ ...form, dateOfBirth: e.target.value })
                   }
                 />
-                <select
-                  className="w-full p-3 rounded bg-white/5 border border-white/10 text-white outline-none focus:border-[#D4AF37]/50"
-                  value={form.gender}
-                  onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                >
-                  <option value="" className="bg-black">
-                    Odaberi spol
-                  </option>
-                  <option value="MALE" className="bg-black">
-                    Muško
-                  </option>
-                  <option value="FEMALE" className="bg-black">
-                    Žensko
-                  </option>
-                  <option value="OTHER" className="bg-black">
-                    Ostalo
-                  </option>
-                </select>
+                
+
+                <select className="w-full p-3 rounded bg-black border border-white/10 text-white outline-none focus:border-[#D4AF37]/50 hover:bg-gray-800"
+                value={form.gender}
+                onChange={(e) => setForm({ ...form, gender: e.target.value })}
+              >
+                <option value="" className="bg-black text-white">
+                  Odaberi spol
+                </option>
+                <option value="MALE" className="bg-black text-white">
+                  Muško
+                </option>
+                <option value="FEMALE" className="bg-black text-white">
+                  Žensko
+                </option>
+                <option value="OTHER" className="bg-black text-white">
+                  Ostalo
+                </option>
+              </select>
+
+                
                 <div className="flex justify-end gap-4 mt-8">
                   <button
                     type="button"
