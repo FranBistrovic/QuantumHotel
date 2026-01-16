@@ -20,7 +20,7 @@ export default function RegisterPage() {
       });
 
       if (response.ok) {
-        setMessage("✅ Uspješna registracija!");
+        setMessage("✅ Uspješna registracija! Molimo Vas potvrdite svoj profil putem e-mail-a.");
         setTimeout(() => {
           window.location.href = "/login";
         }, 800);
@@ -86,6 +86,10 @@ export default function RegisterPage() {
           Registriraj se
         </button>
 
+        <h2 className="mt-4">
+          Nakon registracije potrebno je potvrditi profil putem e-maila koji ćemo Vam poslati.
+        </h2>
+
         <a
           href="/oauth2/authorization/google"
           className="google-btn flex items-center gap-3 mt-6 px-4 py-2 border border-[#d4af37] rounded-lg hover:bg-[#fff7e6] transition"
@@ -115,3 +119,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+
