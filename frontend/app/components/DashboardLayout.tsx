@@ -29,25 +29,16 @@ export function DashboardLayout({
   const pathname = usePathname();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
-  /* -------------------------------------------------
-   ROLE (AUTOMATSKI IZ URL-a)
-  ------------------------------------------------- */
   const role: Role = pathname.startsWith("/admin")
     ? "admin"
     : pathname.startsWith("/staff")
     ? "staff"
     : "user";
 
-  /* -------------------------------------------------
-   PREFIX
-  ------------------------------------------------- */
   const prefix =
     role === "admin" ? "/admin" : role === "staff" ? "/staff" : "";
 
-  /* -------------------------------------------------
-   NAVIGACIJA – ISTA KAO TVOJA
-  ------------------------------------------------- */
-  
+ 
   const navigation =[ {name: "Rezervacije", href: `${prefix}/reservations`, icon: Calendar }];
 
   if (role === "admin" || role === "staff") {
@@ -72,9 +63,6 @@ export function DashboardLayout({
     );
 
 
-  /* -------------------------------------------------
-   ADMIN DODACI (KAO PRIJE)
-  ------------------------------------------------- */
   if (role === "admin") {
     navigation.push(
       { name: "Korisnici", href: "/admin/users", icon: Users },

@@ -16,7 +16,7 @@ interface RoomCategory {
   checkOutTime: string;
 }
 
-/* ---------- helper za error poruke ---------- */
+
 const getErrorMessage = async (response: Response) => {
   if (response.status === 401) return "❌ Niste prijavljeni.";
   if (response.status === 403) return "⛔ Nemate ovlasti.";
@@ -34,7 +34,7 @@ export default function RoomCategoriesPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  /* ---------- GET /api/room-categories ---------- */
+
   useEffect(() => {
     const fetchCategories = async () => {
       setLoading(true);
@@ -59,12 +59,10 @@ export default function RoomCategoriesPage() {
     fetchCategories();
   }, []);
 
-  /* ---------- FILTER ---------- */
   const filteredData = categories.filter((c) =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  /* ---------- TABLICA ---------- */
   const columns: Column<RoomCategory>[] = [
     {
       key: "name",

@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 export default function LoginPage() {
-  const [username, setEmail] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
@@ -11,7 +11,7 @@ export default function LoginPage() {
 
     try {
       const formData = new FormData();
-      formData.append("username", username);
+      formData.append("username", email);
       formData.append("password", password);
 
       const response = await fetch("/api/auth/login", {
@@ -34,46 +34,43 @@ export default function LoginPage() {
           setMessage("❌ Greška: " + text);
         }
       }
-    } catch (err) {
+    } catch {
       setMessage("⚠️ Server nije dostupan.");
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-[#800020]">
-      <h1 className="text-3xl font-bold mb-6">Prijava</h1>
-      <form
-        onSubmit={handleLogin}
-        className="bg-white shadow-md rounded-2xl p-8 w-80 border border-[#d4af37]"
-      >
-        <input
-          type="text"
-          placeholder="Email"
-          value={username}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-2 mb-4 border rounded-lg"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Lozinka"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-2 mb-6 border rounded-lg"
-          required
-        />
-        <button
-          type="submit"
-          className="w-full bg-[#800020] text-[#d4af37] py-2 rounded-lg hover:opacity-90 transition"
-        >
-          Prijavi se
-        </button>
-
-        <a
-          href="/oauth2/authorization/google"
-          className="google-btn flex items-center gap-3 mt-6 px-4 py-2 border border-[#d4af37] rounded-lg hover:bg-[#fff7e6] transition"
-        >
-          <svg className="google-icon w-6 h-6" viewBox="0 0 24 24">
+    <div className="login-wrapper">
+      <div className="login-box">
+        <h1 className="login-title">Prijava</h1>
+        <form onSubmit={handleLogin} className="login-form">
+          <input
+            type="text"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="login-input"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Lozinka"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="login-input"
+            required
+          />
+          <button type="submit" className="login-button">
+            Prijavi se
+          </button>
+        </form>
+        <a href="/oauth2/authorization/google" className="google-button">
+          <svg
+            className="google-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -93,8 +90,10 @@ export default function LoginPage() {
           </svg>
           Continue with Google
         </a>
-      </form>
-      {message && <p className="mt-4">{message}</p>}
+
+        {message && <p className="login-message">{message}</p>}
+      </div>
+
     </div>
   );
 }

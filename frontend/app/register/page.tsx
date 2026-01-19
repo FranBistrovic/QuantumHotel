@@ -20,11 +20,12 @@ export default function RegisterPage() {
       });
 
       if (response.ok) {
-        setMessage("✅ Uspješna registracija! Molimo Vas potvrdite svoj profil putem e-mail-a.");
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 800);
-      } else {
+  setMessage("✅ Uspješna registracija! Molimo Vas potvrdite svoj profil putem e-mail-a.");
+  setTimeout(() => {
+    window.location.href = "/login";
+  }, 800);
+}
+ else {
         const text = await response.text();
         try {
           const json = JSON.parse(text);
@@ -41,60 +42,53 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-[#800020]">
-      <h1 className="text-3xl font-bold mb-6">Registracija</h1>
-      <form
-        onSubmit={handleRegister}
-        className="bg-white shadow-md rounded-2xl p-8 w-80 border border-[#d4af37]"
-      >
-        <input
-          type="text"
-          placeholder="Ime"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          className="w-full p-2 mb-4 border rounded-lg"
-          required
-        />
-        <input
-          type="text"
-          placeholder="Prezime"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          className="w-full p-2 mb-4 border rounded-lg"
-          required
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-2 mb-4 border rounded-lg"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Lozinka"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-2 mb-6 border rounded-lg"
-          required
-        />
-        <button
-          type="submit"
-          className="w-full bg-[#800020] text-[#d4af37] py-2 rounded-lg hover:opacity-90 transition"
-        >
-          Registriraj se
-        </button>
+    <div className="login-wrapper">
+      <div className="login-box">
+        <h1 className="login-title">Registracija</h1>
+        <form onSubmit={handleRegister} className="login-form">
+          <input
+            type="text"
+            placeholder="Ime"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            className="login-input"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Prezime"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            className="login-input"
+            required
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="login-input"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Lozinka"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="login-input"
+            required
+          />
 
-        <h2 className="mt-4">
+          <button type="submit" className="login-button">
+            Registriraj se
+          </button>
+        </form>
+        <h5 className="mt-4" style={{ color: "#9b1c31" }}>
           Nakon registracije potrebno je potvrditi profil putem e-maila koji ćemo Vam poslati.
-        </h2>
+          </h5>
 
-        <a
-          href="/oauth2/authorization/google"
-          className="google-btn flex items-center gap-3 mt-6 px-4 py-2 border border-[#d4af37] rounded-lg hover:bg-[#fff7e6] transition"
-        >
-          <svg className="google-icon w-6 h-6" viewBox="0 0 24 24">
+        <a href="/oauth2/authorization/google" className="google-button" style={{ color: "#9b1c31" }}>
+          <svg className="google-icon" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -114,9 +108,9 @@ export default function RegisterPage() {
           </svg>
           Continue with Google
         </a>
-      </form>
-      {message && <p className="mt-4">{message}</p>}
+
+        {message && <p className="login-message">{message}</p>}
+      </div>
     </div>
   );
 }
-

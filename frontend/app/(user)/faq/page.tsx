@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { DataTable, Column } from "../../components/DataTable";
 import { FilterBar } from "../../components/FilterBar";
 
-/* ================= TYPES ================= */
 
 interface FAQ {
   id: number;
@@ -12,17 +11,15 @@ interface FAQ {
   answer: string;
 }
 
-/* ================= PAGE ================= */
 
 export default function FaqUserPage() {
-  /* ---------- FAQ ---------- */
+
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const itemsPerPage = 10;
 
-  /* ---------- SUPPORT FORM ---------- */
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [senderEmail, setSenderEmail] = useState("");
@@ -30,7 +27,7 @@ export default function FaqUserPage() {
   const [formStatus, setFormStatus] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
-  /* ================= FETCH FAQ ================= */
+
 
   useEffect(() => {
     const fetchFaqs = async () => {
@@ -48,7 +45,6 @@ export default function FaqUserPage() {
     fetchFaqs();
   }, []);
 
-  /* ================= FETCH USER (AUTO-FILL) ================= */
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -65,14 +61,13 @@ export default function FaqUserPage() {
         setSenderEmail(data.email || "");
         setSenderName(fullName);
       } catch {
-        // user može ručno upisati ako fetch ne uspije
+    
       }
     };
 
     fetchUser();
   }, []);
 
-  /* ================= FILTERING ================= */
 
   const filteredFaqs = faqs.filter(
     f =>
@@ -95,7 +90,6 @@ export default function FaqUserPage() {
     },
   ];
 
-  /* ================= SUBMIT SUPPORT ================= */
 
   const submitSupport = async () => {
     if (!subject || !message || !senderEmail) {
@@ -130,12 +124,10 @@ export default function FaqUserPage() {
     }
   };
 
-  /* ================= RENDER ================= */
 
   return (
     <div className="dashboard-main space-y-12">
 
-      {/* ================= FAQ ================= */}
       <section>
         <div className="page-header border-b border-[#262626] pb-6 mb-4">
           <h1 className="page-title text-2xl font-bold text-white">FAQ</h1>
@@ -188,7 +180,6 @@ export default function FaqUserPage() {
         )}
       </section>
 
-      {/* ================= SUPPORT ================= */}
       <section className="bg-[#0f0f0f] border border-[#262626] rounded-xl p-6 space-y-4 max-w-2xl">
         <h2 className="text-xl font-bold text-white">Kontaktiraj podršku</h2>
 

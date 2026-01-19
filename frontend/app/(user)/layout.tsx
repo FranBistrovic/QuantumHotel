@@ -1,7 +1,8 @@
 "use client";
 
 import "./globals.css";
-import { DashboardLayout } from "../components/DashboardLayout";
+//import { DashboardLayout } from "../components/DashboardLayout";
+import { DashboardLayout } from "../components/DashboardLayoutuser";
 import { usePathname } from "next/navigation";
 
 export default function DashboardWrapper({
@@ -25,7 +26,7 @@ export default function DashboardWrapper({
         overflow: "hidden",
       }}
     >
-      <DashboardLayout isStaff={isStaff}>
+      <DashboardLayout>
         <div
           style={{
             height: "100vh",

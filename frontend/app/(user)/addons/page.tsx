@@ -20,7 +20,7 @@ export default function AddonsPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
-  // --- Dohvat dodataka (isti pattern kao ArticlesPage)
+  
   useEffect(() => {
     const fetchAddons = async () => {
       setLoading(true);
@@ -42,7 +42,7 @@ export default function AddonsPage() {
     fetchAddons();
   }, []);
 
-  // --- Filtriranje
+ 
   const filteredData = addons.filter((a) =>
     a.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
