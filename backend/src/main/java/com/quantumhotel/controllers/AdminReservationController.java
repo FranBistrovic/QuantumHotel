@@ -1,4 +1,6 @@
 package com.quantumhotel.controllers;
+import com.quantumhotel.controllers.dto.ReservationPatchDto;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
@@ -10,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -49,6 +52,17 @@ public class AdminReservationController {
     ) {
         reservationService.reject(id, extractUsername(authentication), reason);
     }
+
+    @PatchMapping("/{id}/update")
+    public void update(
+            @PathVariable Long id,
+            @RequestBody ReservationPatchDto dto,
+            Authentication authentication
+    ) {
+        String username = authentication.getName(); // or use your extractUsername() method
+        reservationService.patchAdmin(id, dto, username);
+    }
+
     private String extractUsername(Authentication authentication) {
         Object principal = authentication.getPrincipal();
 

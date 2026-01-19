@@ -8,6 +8,7 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.quantumhotel.controllers.dto.HotelStatisticsDTO;
 import org.springframework.stereotype.Component;
+import java.text.DecimalFormat;
 
 
 import java.awt.*;
@@ -16,13 +17,15 @@ import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.util.Map;
 
+
+
 @Component
 public class PdfExporter {
-
-    private static final Font TITLE_FONT = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD, BaseColor.DARK_GRAY);
-    private static final Font HEADER_FONT = new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD, BaseColor.BLACK);
-    private static final Font NORMAL_FONT = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL, BaseColor.BLACK);
-    private static final Font BOLD_FONT = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, BaseColor.BLACK);
+    private static final DecimalFormat MONEY_FORMAT = new DecimalFormat("#,##0.00");
+    private static final Font TITLE_FONT = new Font(Font.FontFamily.COURIER, 18, Font.BOLD, BaseColor.DARK_GRAY);
+    private static final Font HEADER_FONT = new Font(Font.FontFamily.COURIER, 14, Font.BOLD, BaseColor.BLACK);
+    private static final Font NORMAL_FONT = new Font(Font.FontFamily.COURIER, 10, Font.NORMAL, BaseColor.BLACK);
+    private static final Font BOLD_FONT = new Font(Font.FontFamily.COURIER, 10, Font.BOLD, BaseColor.BLACK);
 
     public byte[] export(HotelStatisticsDTO statistics) throws Exception {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -58,7 +61,7 @@ public class PdfExporter {
         addTableRow(summaryTable, "Total Reservations", String.valueOf(statistics.getTotalReservations()));
         addTableRow(summaryTable, "Completed Reservations", String.valueOf(statistics.getCompletedReservations()));
         addTableRow(summaryTable, "Cancelled Reservations", String.valueOf(statistics.getCancelledReservations()));
-        addTableRow(summaryTable, "Total Revenue", "$" + statistics.getTotalRevenue().toString());
+        addTableRow(summaryTable, "Total Revenue", "$" + MONEY_FORMAT.format(statistics.getTotalRevenue()));
         addTableRow(summaryTable, "Average Stay Duration", statistics.getAverageStayDuration() + " days");
 
         document.add(summaryTable);
@@ -103,7 +106,7 @@ public class PdfExporter {
             for (HotelStatisticsDTO.AccommodationStats acc : statistics.getTopAccommodations()) {
                 accomTable.addCell(new PdfPCell(new Phrase(acc.getCategoryName(), NORMAL_FONT)));
                 accomTable.addCell(new PdfPCell(new Phrase(String.valueOf(acc.getReservationCount()), NORMAL_FONT)));
-                accomTable.addCell(new PdfPCell(new Phrase("$" + acc.getTotalRevenue().toString(), NORMAL_FONT)));
+                accomTable.addCell(new PdfPCell(new Phrase("$" + MONEY_FORMAT.format(acc.getTotalRevenue()))));
             }
 
             document.add(accomTable);
@@ -125,7 +128,7 @@ public class PdfExporter {
             for (HotelStatisticsDTO.AmenityStats amenity : statistics.getPopularAmenities()) {
                 amenityTable.addCell(new PdfPCell(new Phrase(amenity.getAmenityName(), NORMAL_FONT)));
                 amenityTable.addCell(new PdfPCell(new Phrase(String.valueOf(amenity.getUsageCount()), NORMAL_FONT)));
-                amenityTable.addCell(new PdfPCell(new Phrase("$" + amenity.getTotalRevenue().toString(), NORMAL_FONT)));
+                amenityTable.addCell(new PdfPCell(new Phrase("$" + MONEY_FORMAT.format(amenity.getTotalRevenue()))));
             }
 
             document.add(amenityTable);

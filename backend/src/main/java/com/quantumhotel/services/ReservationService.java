@@ -164,6 +164,37 @@ public class ReservationService {
         );
     }
 
+    public Reservation patchAdmin(Long id, ReservationPatchDto dto, String username) {
+        User admin = resolveUser(username);
+
+        Reservation r = reservationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+
+        if (r.getStatus() != ReservationStatus.PENDING) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only PENDING reservations can be modified"
+            );
+        }
+
+        // Update dates if provided
+        if (dto.getDateFrom() != null) r.setDateFrom(dto.getDateFrom());
+        if (dto.getDateTo() != null) r.setDateTo(dto.getDateTo());
+        r.setProcessedAt(Instant.now());
+        r.setProcessedBy(admin);
+        // Notify the user about the update
+        emailService.sendReservationUpdated(
+                r.getUser().getEmail(),
+                r.getId(),
+                r.getDateFrom(),
+                r.getDateTo()
+        );
+
+        return reservationRepository.save(r);
+    }
+
+
     public void reject(Long id, String username, String reason) {
         User admin = resolveUser(username);
         Reservation r = getReservation(id);

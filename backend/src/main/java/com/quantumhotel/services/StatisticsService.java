@@ -8,6 +8,7 @@ import com.quantumhotel.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -84,13 +85,27 @@ public class StatisticsService {
         return stats;
     }
 
-        private BigDecimal calculateTotalRevenue(List<Object[]> reservations) {
+    private BigDecimal calculateTotalRevenue(List<Object[]> reservations) {
         return reservations.stream()
                 .filter(r -> "CONFIRMED".equals(r[5].toString()))
-                .map(r -> (BigDecimal) r[8]) // Assuming price is at index 7
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .map(r -> {
+                    LocalDate from = (LocalDate) r[1]; // res_date_from
+                    LocalDate to = (LocalDate) r[2];   // res_date_to
+                    BigDecimal pricePerNight = (BigDecimal) r[8];
+
+                    if (from == null || to == null || pricePerNight == null) {
+                        return BigDecimal.ZERO;
+                    }
+
+                    long nights = java.time.temporal.ChronoUnit.DAYS.between(from, to);
+                    if (nights <= 0) return BigDecimal.ZERO;
+
+                    return pricePerNight.multiply(BigDecimal.valueOf(nights));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
     }
+
 
     private BigDecimal calculateAverageStayDuration(List<Object[]> reservations) {
         if (reservations.isEmpty()) {
@@ -99,15 +114,19 @@ public class StatisticsService {
 
         long totalDays = reservations.stream()
                 .mapToLong(r -> {
-                    LocalDate from = (LocalDate) r[1]; // res_date_from
-                    LocalDate to = (LocalDate) r[2]; // res_date_to
-                    return Period.between(from, to).getDays();
+                    LocalDate from = (LocalDate) r[1];
+                    LocalDate to = (LocalDate) r[2];
+
+                    if (from == null || to == null) return 0;
+
+                    return java.time.temporal.ChronoUnit.DAYS.between(from, to);
                 })
                 .sum();
 
         return BigDecimal.valueOf(totalDays)
                 .divide(BigDecimal.valueOf(reservations.size()), 2, RoundingMode.HALF_UP);
     }
+
 
     private Map<String, Integer> groupReservationsByCity(List<Object[]> reservations) {
         return reservations.stream()
