@@ -12,15 +12,17 @@ import java.util.List;
 @Repository
 public interface AccommodationCategoryRepository extends JpaRepository<AccommodationCategory, Long> {
     @Query("""
-       SELECT c.name, COUNT(r), SUM(c.price)
-       FROM Reservation r
-       JOIN r.category c
-       WHERE r.dateFrom >= :startDate
-         AND r.dateTo <= :endDate
-         AND r.status = 'CONFIRMED'
-       GROUP BY c.Id, c.name
-       ORDER BY COUNT(r) DESC
-       """)
+   SELECT c.name,
+          COUNT(r.id) AS reservation_count,
+          SUM(c.price * datediff(day, r.dateFrom, r.dateTo)) AS total_revenue
+   FROM Reservation r
+   JOIN AccommodationCategory c ON r.category.id = c.id
+   WHERE r.dateFrom >= :startDate
+     AND r.dateTo <= :endDate
+     AND r.status = 'CONFIRMED'
+   GROUP BY c.id, c.name
+   ORDER BY reservation_count DESC
+""")
     List<Object[]> findTopAccommodations(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
