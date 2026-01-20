@@ -24,6 +24,7 @@ interface Reservation {
   amenities: {
     id: number;
     name: string;
+    amn_id: number;
     quantity: number;
     price: number;
   }[];
@@ -47,7 +48,8 @@ interface Addon {
 }
 
 interface SelectedAddon {
-  amenityId: number;
+  id?: number;
+  amn_id: number;
   quantity: number;
 }
 
@@ -112,34 +114,34 @@ export default function ReservationsPage() {
   */}
 
   useEffect(() => {
-  let isMounted = true;
-  const fetchReservations = async () => {
-    try {
-      const res = await fetch("/api/reservations/me", { credentials: "include" });
+    let isMounted = true;
+    const fetchReservations = async () => {
+      try {
+        const res = await fetch("/api/reservations/me", { credentials: "include" });
 
-      if (!res.ok) {
-        if (res.status === 401) {
-          router.replace("/login");
+        if (!res.ok) {
+          if (res.status === 401) {
+            router.replace("/login");
+            return;
+          }
+          if (isMounted) setMessage("⚠️ Nemate ovlasti ili došlo je do greške.");
+          setReservations([]);
           return;
-        } 
-        if (isMounted) setMessage("⚠️ Nemate ovlasti ili došlo je do greške.");
-        setReservations([]);
-        return;
-      }
+        }
 
-      const data: Reservation[] = await res.json();
-      if (isMounted) setReservations(data);
-    } catch (err) {
-      console.error(err);
-      if (isMounted) setMessage("⚠️ Greška pri dohvaćanju rezervacija.");
-      setReservations([]);
-    } finally {
-      if (isMounted) setLoading(false);
-    }
-  };
-  fetchReservations();
-  return () => { isMounted = false; };
-}, [router]);
+        const data: Reservation[] = await res.json();
+        if (isMounted) setReservations(data);
+      } catch (err) {
+        console.error(err);
+        if (isMounted) setMessage("⚠️ Greška pri dohvaćanju rezervacija.");
+        setReservations([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchReservations();
+    return () => { isMounted = false; };
+  }, [router]);
 
 
 
@@ -172,7 +174,7 @@ export default function ReservationsPage() {
 
   if (loading) return <div>Učitavanje...</div>;
 
-{/*}
+  {/*}
   const fetchAvailableRooms = async () => {
     if (!dateFrom || !dateTo) return;
     const res = await fetch(
@@ -183,54 +185,63 @@ export default function ReservationsPage() {
   */}
 
   const fetchAvailableRooms = async () => {
-  if (!dateFrom || !dateTo) {
-    setMessage("⚠️ Molimo odaberite datume za rezervaciju.");
-    return;
-  }
-
-  setLoading(true);
-  setMessage(""); // resetiraj prethodne poruke
-
-  try {
-    const res = await fetch(
-      `/api/room-categories/available?from=${dateFrom}&to=${dateTo}&persons=${persons}`,
-      { credentials: "include" }
-    );
-
-    if (!res.ok) {
-      // pokušaj dohvatiti detalje greške iz odgovora
-      const errorData = await res.json().catch(() => null);
-      const errorMsg =
-        errorData?.message ||
-        `Greška pri dohvaćanju dostupnih soba (status ${res.status})`;
-      setMessage(`⚠️ ${errorMsg}`);
-      setAvailableRooms([]);
+    if (!dateFrom || !dateTo) {
+      setMessage("⚠️ Molimo odaberite datume za rezervaciju.");
       return;
     }
 
-    const data: Room[] = await res.json();
-    setAvailableRooms(Array.isArray(data) ? data : []);
-    if (data.length === 0) setMessage("⚠️ Nema dostupnih soba za odabrane datume.");
-  } catch (err: unknown) {
-    console.error(err);
-    setMessage("⚠️ Veza sa serverom nije uspjela. Pokušajte ponovo.");
-    setAvailableRooms([]);
-  } finally {
-    setLoading(false);
-  }
+    setLoading(true);
+    setMessage(""); // resetiraj prethodne poruke
+
+    try {
+      const res = await fetch(
+        `/api/room-categories/available?from=${dateFrom}&to=${dateTo}&persons=${persons}`,
+        { credentials: "include" }
+      );
+
+      if (!res.ok) {
+        // pokušaj dohvatiti detalje greške iz odgovora
+        const errorData = await res.json().catch(() => null);
+        const errorMsg =
+          errorData?.message ||
+          `Greška pri dohvaćanju dostupnih soba (status ${res.status})`;
+        setMessage(`⚠️ ${errorMsg}`);
+        setAvailableRooms([]);
+        return;
+      }
+
+      const data: Room[] = await res.json();
+      setAvailableRooms(Array.isArray(data) ? data : []);
+      if (data.length === 0) setMessage("⚠️ Nema dostupnih soba za odabrane datume.");
+    } catch (err: unknown) {
+      console.error(err);
+      setMessage("⚠️ Veza sa serverom nije uspjela. Pokušajte ponovo.");
+      setAvailableRooms([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const updateAddon = (amnId: number, quantity: number) => {
+  setSelectedAddons(prev => {
+    const existing = prev.find(a => a.amn_id === amnId);
+
+    if (existing) {
+      return prev.map(a =>
+        a.amn_id === amnId ? { ...a, quantity } : a
+      );
+    }
+
+    if (quantity > 0) {
+      return [...prev, { amn_id: amnId, quantity }];
+    }
+
+    return prev;
+  });
 };
 
 
-  const updateAddon = (addonId: number, quantity: number) => {
-    setSelectedAddons(prev => {
-      if (quantity === 0) return prev.filter(a => a.amenityId !== addonId);
-      const existing = prev.find(a => a.amenityId === addonId);
-      if (existing) {
-        return prev.map(a => a.amenityId === addonId ? { ...a, quantity } : a);
-      }
-      return [...prev, { amenityId: addonId, quantity }];
-    });
-  };
 
   const createReservation = async () => {
     if (!selectedRoom || !dateFrom || !dateTo) return;
@@ -269,7 +280,10 @@ export default function ReservationsPage() {
           body: JSON.stringify({
             dateFrom: formData.dateFrom,
             dateTo: formData.dateTo,
-            amenities: selectedAddons,
+            amenities: selectedAddons.map(a => ({
+              amenityId: a.amn_id,
+              quantity: a.quantity,
+            })),
           }),
         }
       );
@@ -326,13 +340,12 @@ export default function ReservationsPage() {
       label: "Status",
       render: (value: Reservation["status"]) => (
         <span
-          className={`px-2 py-1 rounded-full text-sm ${
-            value === "PENDING"
+          className={`px-2 py-1 rounded-full text-sm ${value === "PENDING"
               ? "bg-gray-300 text-gray-900"
               : value === "CONFIRMED"
-              ? "bg-gray-200 text-gray-900 border border-gray-400"
-              : "bg-red-100 text-red-800 border border-red-300"
-          }`}
+                ? "bg-gray-200 text-gray-900 border border-gray-400"
+                : "bg-red-100 text-red-800 border border-red-300"
+            }`}
         >
           {statusLabels[value]}
         </span>
@@ -373,10 +386,10 @@ export default function ReservationsPage() {
 
   //novo
   const getAddonQuantity = (addonId: number) =>
-  selectedAddons.find(a => a.amenityId === addonId)?.quantity || 0;
+    selectedAddons.find(a => a.amn_id === addonId)?.quantity || 0;
 
 
- 
+
   return (
     <div className="dashboard-main space-y-12 p-6">
       {/* CREATE NEW RESERVATION */}
@@ -394,7 +407,7 @@ export default function ReservationsPage() {
               onChange={e => setDateFrom(e.target.value)}
               className="input-field border border-gray-400 rounded p-2 bg-gray-200 text-black focus:ring-2 focus:ring-red-500 white-calendar"
             />
-            
+
           </div>
 
           {/* DO KADA */}
@@ -436,11 +449,10 @@ export default function ReservationsPage() {
           {availableRooms.map(room => (
             <div
               key={room.id}
-              className={`room-card p-4 border rounded cursor-pointer ${
-                selectedRoom?.id === room.id
+              className={`room-card p-4 border rounded cursor-pointer ${selectedRoom?.id === room.id
                   ? "border-red-600 bg-gray-200 shadow-md"
                   : "border-gray-400 hover:border-red-500 hover:bg-gray-200"
-              }`}
+                }`}
               onClick={() => setSelectedRoom(room)}
             >
               <h4 className="font-semibold text-black">Soba {room.roomNumber}</h4>
@@ -448,16 +460,16 @@ export default function ReservationsPage() {
 
               <p className="text-gray-800 mt-1">{room.price} €</p>
               {room.imagePath ? (
-                      <img
-                        src={ `${process.env.NEXT_PUBLIC_API_URL}${room.imagePath}` || "/placeholder.svg"}
-                        alt={room.name}
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Bed className="h-12 w-12 text-muted-foreground/50" />
-                      </div>
-                    )}
+                <img
+                  src={`${process.env.NEXT_PUBLIC_API_URL}${room.imagePath}` || "/placeholder.svg"}
+                  alt={room.name}
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Bed className="h-12 w-12 text-muted-foreground/50" />
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -465,44 +477,44 @@ export default function ReservationsPage() {
         {/* Add-ons */}
         <h3 className="mt-6 mb-2 text-lg font-semibold text-black">Dodatne usluge</h3>
         <div className="space-y-2">
-         {addons.map(addon => {
-  const quantity = getAddonQuantity(addon.id);
+          {addons.map(addon => {
+            const quantity = getAddonQuantity(addon.id);
 
-  return (
-    <div
-      key={addon.id}
-      className="amenity-row flex items-center justify-between p-2 border border-gray-400 rounded bg-gray-100 max-w-sm"
-    >
-      <span className="text-gray-800">{addon.name}</span>
+            return (
+              <div
+                key={addon.id}
+                className="amenity-row flex items-center justify-between p-2 border border-gray-400 rounded bg-gray-100 max-w-sm"
+              >
+                <span className="text-gray-800">{addon.name}</span>
 
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() =>
-            updateAddon(addon.id, Math.max(0, quantity - 1))
-          }
-          className="w-7 h-7 flex items-center justify-center rounded border border-gray-400 bg-gray-100 hover:bg-gray-200 text-black"
-        >
-          −
-        </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateAddon(addon.id, Math.max(0, quantity - 1))
+                    }
+                    className="w-7 h-7 flex items-center justify-center rounded border border-gray-400 bg-gray-100 hover:bg-gray-200 text-black"
+                  >
+                    −
+                  </button>
 
-        <span className="w-5 text-center text-black text-sm font-medium">
-          {quantity}
-        </span>
+                  <span className="w-5 text-center text-black text-sm font-medium">
+                    {quantity}
+                  </span>
 
-        <button
-          type="button"
-          onClick={() =>
-            updateAddon(addon.id, quantity + 1)
-          }
-          className="w-7 h-7 flex items-center justify-center rounded border border-gray-400 bg-gray-100 hover:bg-gray-200 text-black"
-        >
-          +
-        </button>
-      </div>
-    </div>
-  );
-})}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateAddon(addon.id, quantity + 1)
+                    }
+                    className="w-7 h-7 flex items-center justify-center rounded border border-gray-400 bg-gray-100 hover:bg-gray-200 text-black"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            );
+          })}
 
 
 
@@ -528,7 +540,7 @@ export default function ReservationsPage() {
           onEdit={row => {
             if (row.status === "PENDING") {
               setFormData(row);
-              setSelectedAddons(row.amenities.map(a => ({ amenityId: a.id, quantity: a.quantity })));
+              setSelectedAddons(row.amenities.map(a => ({ id: a.id, amn_id: a.amn_id, quantity: a.quantity })));
             }
           }}
           className="data-table bg-gray-100 text-white"
@@ -539,8 +551,8 @@ export default function ReservationsPage() {
           isOpen={!!formData}
           onClose={() => setFormData(null)}
           title="Uredi rezervaciju"
-      
-        
+
+
         >
           {formData && (
             <div className="space-y-5 py-2">
@@ -577,32 +589,32 @@ export default function ReservationsPage() {
               <h3 className="mt-4 mb-2 text-sm font-semibold text-gray-600">Dodatne usluge</h3>
               <div className="space-y-2">
                 {addons.map(addon => {
-                  const existing = selectedAddons.find(a => a.amenityId === addon.id);
+                  const existing = selectedAddons.find(a => a.amn_id === addon.id);
                   const quantity = existing ? existing.quantity : 0;
                   return (
                     <div key={addon.id} className="amenity-row flex items-center justify-between p-2 border border-gray-400 rounded bg-gray-100 hover:bg-gray-200">
                       <span className="text-gray-800">{addon.name}</span>
                       <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => updateAddon(addon.id, Math.max(0, quantity - 1))}
-                        className="w-7 h-7 flex items-center justify-center rounded border border-gray-400 bg-gray-100 hover:bg-gray-200 text-black"
-                      >
-                        −
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => updateAddon(addon.id, Math.max(0, quantity - 1))}
+                          className="w-7 h-7 flex items-center justify-center rounded border border-gray-400 bg-gray-100 hover:bg-gray-200 text-black"
+                        >
+                          −
+                        </button>
 
-                      <span className="w-5 text-center text-black text-sm font-medium">
-                        {quantity}
-                      </span>
+                        <span className="w-5 text-center text-black text-sm font-medium">
+                          {quantity}
+                        </span>
 
-                      <button
-                        type="button"
-                        onClick={() => updateAddon(addon.id, quantity + 1)}
-                        className="w-7 h-7 flex items-center justify-center rounded border border-gray-400 bg-gray-100 hover:bg-gray-200 text-black"
-                      >
-                        +
-                      </button>
-                    </div>
+                        <button
+                          type="button"
+                          onClick={() => updateAddon(addon.id, quantity + 1)}
+                          className="w-7 h-7 flex items-center justify-center rounded border border-gray-400 bg-gray-100 hover:bg-gray-200 text-black"
+                        >
+                          +
+                        </button>
+                      </div>
 
                     </div>
                   );
@@ -617,7 +629,7 @@ export default function ReservationsPage() {
           )}
         </Modal>
 
-             <Pagination
+        <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
