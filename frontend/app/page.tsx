@@ -35,7 +35,6 @@ export default function HomePage() {
           const data = await res.json();
           setUser(data);
 
-          
           setCity(data.city || "");
           setDateOfBirth(data.dateOfBirth || "");
           setGender(data.gender || "");
@@ -81,51 +80,50 @@ export default function HomePage() {
     );
   }
 
- if (user && (!user.city || !user.dateOfBirth || !user.gender)) {
-  return (
-    <div className="modal-overlay3">
-      <div className="modal-content3">
-        <h2 className="login-title3">Dopunite svoje podatke</h2>
-        <form onSubmit={handleSubmit} className="login-form3">
-          <input
-            type="text"
-            placeholder="Grad"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            required
-            className="login-input3"
-          />
-          <input
-            type="date"
-            placeholder="Datum rođenja"
-            value={dateOfBirth}
-            onChange={(e) => setDateOfBirth(e.target.value)}
-            required
-            className="login-input3"
-          />
-          <select
-            value={gender}
-            onChange={(e) => setGender(e.target.value)}
-            required
-            className="login-input3"
-          >
-            <option value="">Odaberite spol</option>
-            <option value="MALE">Muški</option>
-            <option value="FEMALE">Ženski</option>
-            <option value="OTHER">Drugi</option>
-          </select>
+  if (user && (!user.city || !user.dateOfBirth || !user.gender)) {
+    return (
+      <div className="modal-overlay3">
+        <div className="modal-content3">
+          <h2 className="login-title3">Dopunite svoje podatke</h2>
+          <form onSubmit={handleSubmit} className="login-form3">
+            <input
+              type="text"
+              placeholder="Grad"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              required
+              className="login-input3"
+            />
+            <input
+              type="date"
+              placeholder="Datum rođenja"
+              value={dateOfBirth}
+              onChange={(e) => setDateOfBirth(e.target.value)}
+              required
+              className="login-input3"
+            />
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              required
+              className="login-input3"
+            >
+              <option value="">Odaberite spol</option>
+              <option value="MALE">Muški</option>
+              <option value="FEMALE">Ženski</option>
+              <option value="OTHER">Drugi</option>
+            </select>
 
-          <button type="submit" className="login-button3">
-            Spremi
-          </button>
+            <button type="submit" className="login-button3">
+              Spremi
+            </button>
 
-          {message && <p className="login-message3">{message}</p>}
-        </form>
+            {message && <p className="login-message3">{message}</p>}
+          </form>
+        </div>
       </div>
-    </div>
-  );
-}
-
+    );
+  }
 
   const mapUrl = `https://www.google.com/maps?q=${location.latitude},${location.longitude}&z=15&output=embed`;
 
@@ -145,9 +143,7 @@ export default function HomePage() {
 
       {/* Kontakt */}
       <section className=" ">
-        <h3 className="text-2xl font-semibold text-[#800020] mb-4">
-          Kontakt
-        </h3>
+        <h3 className="text-2xl font-semibold text-[#800020] mb-4">Kontakt</h3>
         <p className="text-white-800">📍 Adresa: Ulica Mira 42, Zagreb</p>
         <p className="text-white-800">📞 Telefon: +385 1 234 5678</p>
         <p className="text-white-800">✉️ Email: info@quantumhotel.hr</p>
