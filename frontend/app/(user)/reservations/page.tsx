@@ -5,8 +5,8 @@ import { DataTable, Column } from "../../components/DataTable";
 import { Pagination } from "../../components/Pagination";
 import { useRouter } from "next/navigation";
 import { Modal } from "../../components/Modal";
+import { Bed } from "lucide-react";
 
-/* ================= TYPES ================= */
 
 interface Reservation {
   id: number;
@@ -37,11 +37,13 @@ interface Room {
   price: number;
   categoryId: number;
   capacity: number;
+  imagePath: string;
 }
 
 interface Addon {
   id: number;
   name: string;
+  price: number;
 }
 
 interface SelectedAddon {
@@ -49,7 +51,6 @@ interface SelectedAddon {
   quantity: number;
 }
 
-/* ================= CONST ================= */
 
 const statusLabels = {
   PENDING: "na čekanju",
@@ -57,12 +58,11 @@ const statusLabels = {
   REJECTED: "odbijeno",
 };
 
-/* ================= PAGE ================= */
+
 
 export default function ReservationsPage() {
   const router = useRouter();
 
-  /* ---------------- EXISTING RESERVATIONS ---------------- */
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -70,7 +70,7 @@ export default function ReservationsPage() {
   const itemsPerPage = 10;
   const [formData, setFormData] = useState<Partial<Reservation> | null>(null);
 
-  /* ---------------- CREATE NEW RESERVATION ---------------- */
+
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [persons, setPersons] = useState(1);
@@ -80,68 +80,99 @@ export default function ReservationsPage() {
 
   const [addons, setAddons] = useState<Addon[]>([]);
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
+  const [message, setMessage] = useState("");
 
-  /* ================= EFFECTS ================= */
+
 
   const [loading, setLoading] = useState(true);
 
-  // Fetch reservations safely
+  // Fetch reservations
+  {/*}
   useEffect(() => {
-    let isMounted = true; // avoid setting state if component unmounted
-
+    let isMounted = true;
     const fetchReservations = async () => {
       try {
         const res = await fetch("/api/reservations/me", { credentials: "include" });
         if (!res.ok) {
-          // redirect to login if not authorized
           router.replace("/login");
           return;
         }
-
-        const data = await res.json();
+        const data: Reservation[] = await res.json();
         if (isMounted) setReservations(data);
       } catch (err) {
         console.error(err);
-        router.replace("/login"); // fallback redirect
+        router.replace("/login");
       } finally {
         if (isMounted) setLoading(false);
       }
     };
-
     fetchReservations();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [router]);
+  */}
 
-  // Fetch addons safely
+  useEffect(() => {
+  let isMounted = true;
+  const fetchReservations = async () => {
+    try {
+      const res = await fetch("/api/reservations/me", { credentials: "include" });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          router.replace("/login");
+          return;
+        } 
+        if (isMounted) setMessage("⚠️ Nemate ovlasti ili došlo je do greške.");
+        setReservations([]);
+        return;
+      }
+
+      const data: Reservation[] = await res.json();
+      if (isMounted) setReservations(data);
+    } catch (err) {
+      console.error(err);
+      if (isMounted) setMessage("⚠️ Greška pri dohvaćanju rezervacija.");
+      setReservations([]);
+    } finally {
+      if (isMounted) setLoading(false);
+    }
+  };
+  fetchReservations();
+  return () => { isMounted = false; };
+}, [router]);
+
+
+
   useEffect(() => {
     let isMounted = true;
-
     const fetchAddons = async () => {
+      setLoading(true);
       try {
-        const res = await fetch("/api/addons");
-        if (!res.ok) throw new Error("Failed to fetch addons");
-
-        const data = await res.json();
-        if (isMounted) setAddons(data);
-      } catch (err) {
+        const res = await fetch("/api/addons", { credentials: "include" });
+        if (!res.ok) {
+          if (isMounted) setMessage("⚠️ Greška pri dohvaćanju dodataka.");
+          return;
+        }
+        const data: Addon[] = await res.json();
+        if (isMounted) setAddons(Array.isArray(data) ? data : []);
+      } catch (err: unknown) {
+        if (isMounted) setMessage("⚠️ Veza sa serverom nije uspjela.");
         console.error(err);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
-
     fetchAddons();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
+
+
+
+
 
   if (loading) return <div>Učitavanje...</div>;
 
-  /* ================= LOGIC ================= */
-
+{/*}
   const fetchAvailableRooms = async () => {
     if (!dateFrom || !dateTo) return;
     const res = await fetch(
@@ -149,25 +180,60 @@ export default function ReservationsPage() {
     );
     setAvailableRooms(await res.json());
   };
+  */}
+
+  const fetchAvailableRooms = async () => {
+  if (!dateFrom || !dateTo) {
+    setMessage("⚠️ Molimo odaberite datume za rezervaciju.");
+    return;
+  }
+
+  setLoading(true);
+  setMessage(""); // resetiraj prethodne poruke
+
+  try {
+    const res = await fetch(
+      `/api/room-categories/available?from=${dateFrom}&to=${dateTo}&persons=${persons}`,
+      { credentials: "include" }
+    );
+
+    if (!res.ok) {
+      // pokušaj dohvatiti detalje greške iz odgovora
+      const errorData = await res.json().catch(() => null);
+      const errorMsg =
+        errorData?.message ||
+        `Greška pri dohvaćanju dostupnih soba (status ${res.status})`;
+      setMessage(`⚠️ ${errorMsg}`);
+      setAvailableRooms([]);
+      return;
+    }
+
+    const data: Room[] = await res.json();
+    setAvailableRooms(Array.isArray(data) ? data : []);
+    if (data.length === 0) setMessage("⚠️ Nema dostupnih soba za odabrane datume.");
+  } catch (err: unknown) {
+    console.error(err);
+    setMessage("⚠️ Veza sa serverom nije uspjela. Pokušajte ponovo.");
+    setAvailableRooms([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const updateAddon = (addonId: number, quantity: number) => {
     setSelectedAddons(prev => {
       if (quantity === 0) return prev.filter(a => a.amenityId !== addonId);
-
       const existing = prev.find(a => a.amenityId === addonId);
       if (existing) {
-        return prev.map(a =>
-          a.amenityId === addonId ? { ...a, quantity } : a
-        );
+        return prev.map(a => a.amenityId === addonId ? { ...a, quantity } : a);
       }
-
       return [...prev, { amenityId: addonId, quantity }];
     });
   };
 
   const createReservation = async () => {
     if (!selectedRoom || !dateFrom || !dateTo) return;
-
     const res = await fetch("/api/reservations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -178,13 +244,9 @@ export default function ReservationsPage() {
         amenities: selectedAddons,
       }),
     });
-
     if (!res.ok) throw new Error("Greška pri rezervaciji");
-
     const created = await res.json();
     setReservations(prev => [created, ...prev]);
-
-    // reset
     setAvailableRooms([]);
     setSelectedRoom(null);
     setSelectedAddons([]);
@@ -200,15 +262,14 @@ export default function ReservationsPage() {
       const isEdit = !!formData.id;
 
       const res = await fetch(
-        isEdit
-          ? `/api/reservations/${formData.id}`
-          : "/api/reservations",
+        isEdit ? `/api/reservations/${formData.id}` : "/api/reservations",
         {
           method: isEdit ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             dateFrom: formData.dateFrom,
             dateTo: formData.dateTo,
+            amenities: selectedAddons,
           }),
         }
       );
@@ -217,33 +278,27 @@ export default function ReservationsPage() {
 
       const saved = await res.json();
       setReservations(prev =>
-        isEdit
-          ? prev.map(r => (r.id === saved.id ? saved : r))
-          : [saved, ...prev]
+        isEdit ? prev.map(r => (r.id === saved.id ? saved : r)) : [saved, ...prev]
       );
 
       setFormData(null);
+      setSelectedAddons([]);
     } catch (err) {
       console.error(err);
+      setMessage("⚠️ Greška pri spremanju rezervacije.");
     }
   };
-
-  /* ---------------- FILTER & PAGINATION ---------------- */
 
 
   const filteredData = reservations.filter(res => {
     const search = searchTerm.toLowerCase();
-
     const matchesSearch =
       res.categoryName?.toLowerCase().includes(search) ||
       String(res.unitNumber || "").includes(search);
-
     const matchesStatus =
       statusFilter === "all" || res.status === statusFilter;
-
     return matchesSearch && matchesStatus;
   });
-
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
   const paginatedData = filteredData.slice(
@@ -254,8 +309,15 @@ export default function ReservationsPage() {
   const columns: Column<Reservation>[] = [
     {
       label: "Soba",
-      key: "unitNumber",
-      render: value => value ?? "Nije dodijeljena",
+      key: "categoryName",
+      render: (_, row) => (
+        <div className="flex flex-col">
+          <span className="font-medium text-white">{row.categoryName}</span>
+          <span className="text-sm text-white-500">
+            {row.unitNumber ? `Soba ${row.unitNumber}` : "Nije dodijeljena"}
+          </span>
+        </div>
+      ),
     },
     { key: "dateFrom", label: "Dolazak", sortable: true },
     { key: "dateTo", label: "Odlazak", sortable: true },
@@ -264,12 +326,13 @@ export default function ReservationsPage() {
       label: "Status",
       render: (value: Reservation["status"]) => (
         <span
-          className={`px-2 py-1 rounded-full text-sm ${value === "PENDING"
+          className={`px-2 py-1 rounded-full text-sm ${
+            value === "PENDING"
               ? "bg-gray-300 text-gray-900"
               : value === "CONFIRMED"
-                ? "bg-gray-200 text-gray-900 border border-gray-400"
-                : "bg-red-100 text-red-800 border border-red-300"
-            }`}
+              ? "bg-gray-200 text-gray-900 border border-gray-400"
+              : "bg-red-100 text-red-800 border border-red-300"
+          }`}
         >
           {statusLabels[value]}
         </span>
@@ -283,43 +346,55 @@ export default function ReservationsPage() {
         const end = new Date(row.dateTo);
         const msPerDay = 1000 * 60 * 60 * 24;
         const nights = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / msPerDay));
-
-        // Sum amenities
-        const amenitiesTotal = row.amenities?.reduce(
-          (sum, a) => sum + a.price * a.quantity,
-          0
-        ) || 0;
-
+        const amenitiesTotal = row.amenities?.reduce((sum, a) => sum + a.price * a.quantity, 0) || 0;
         const total = (row.categoryPrice + amenitiesTotal) * nights;
-
+        return <span className="text-emerald-400 font-bold">{total.toFixed(2)} €</span>;
+      },
+    },
+    {
+      label: "Dodaci",
+      key: "amenities",
+      render: (_, row) => {
+        if (!row.amenities || row.amenities.length === 0) return <span className="text-gray-400">—</span>;
         return (
-          <span className="text-emerald-400 font-bold">
-            {total.toFixed(2)} €
-          </span>
+
+          <ul className="text-sm space-y-1">
+            {row.amenities.map(a => (
+              <li key={a.id} className="flex justify-between gap-2">
+                <span className="text-white-800">{a.name} × {a.quantity}</span>
+              </li>
+            ))}
+          </ul>
         );
       },
     },
   ];
 
-  /* ================= RENDER ================= */
+
+  //novo
+  const getAddonQuantity = (addonId: number) =>
+  selectedAddons.find(a => a.amenityId === addonId)?.quantity || 0;
+
+
+ 
   return (
     <div className="dashboard-main space-y-12 p-6">
-
-      {/* ============ CREATE NEW RESERVATION ============ */}
+      {/* CREATE NEW RESERVATION */}
       <section className="reservation-create space-y-6 p-6 border rounded shadow-sm bg-gray-100">
         <h1 className="page-title text-2xl font-bold text-black">Rezerviraj</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* OD KADA */}
-          <div className="flex flex-col">
+          <div className="flex flex-col ">
             <label htmlFor="dateFrom" className="font-semibold mb-1 text-black">Od kada</label>
             <input
               id="dateFrom"
               type="date"
               value={dateFrom}
               onChange={e => setDateFrom(e.target.value)}
-              className="input-field border border-gray-400 rounded p-2 bg-gray-200 text-black focus:ring-2 focus:ring-red-500"
+              className="input-field border border-gray-400 rounded p-2 bg-gray-200 text-black focus:ring-2 focus:ring-red-500 white-calendar"
             />
+            
           </div>
 
           {/* DO KADA */}
@@ -330,8 +405,9 @@ export default function ReservationsPage() {
               type="date"
               value={dateTo}
               onChange={e => setDateTo(e.target.value)}
-              className="input-field border border-gray-400 rounded p-2 bg-gray-200 text-black focus:ring-2 focus:ring-red-500"
+              className="w-auto input-field border border-gray-400 rounded p-2 bg-gray-200 text-black focus:ring-2 focus:ring-red-500  white-calendar"
             />
+
           </div>
 
           {/* BROJ OSOBA */}
@@ -360,15 +436,28 @@ export default function ReservationsPage() {
           {availableRooms.map(room => (
             <div
               key={room.id}
-              className={`room-card p-4 border rounded cursor-pointer ${selectedRoom?.id === room.id
+              className={`room-card p-4 border rounded cursor-pointer ${
+                selectedRoom?.id === room.id
                   ? "border-red-600 bg-gray-200 shadow-md"
                   : "border-gray-400 hover:border-red-500 hover:bg-gray-200"
-                }`}
+              }`}
               onClick={() => setSelectedRoom(room)}
             >
-              <h4 className="font-semibold text-black">Soba {room.roomNumber} - {room.name}</h4>
+              <h4 className="font-semibold text-black">Soba {room.roomNumber}</h4>
               <p className="text-gray-800 mt-1">{room.capacity} osoba</p>
+
               <p className="text-gray-800 mt-1">{room.price} €</p>
+              {room.imagePath ? (
+                      <img
+                        src={ `${process.env.NEXT_PUBLIC_API_URL}${room.imagePath}` || "/placeholder.svg"}
+                        alt={room.name}
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Bed className="h-12 w-12 text-muted-foreground/50" />
+                      </div>
+                    )}
             </div>
           ))}
         </div>
@@ -376,17 +465,47 @@ export default function ReservationsPage() {
         {/* Add-ons */}
         <h3 className="mt-6 mb-2 text-lg font-semibold text-black">Dodatne usluge</h3>
         <div className="space-y-2">
-          {addons.map(addon => (
-            <div key={addon.id} className="amenity-row flex items-center justify-between p-2 border border-gray-400 rounded bg-gray-200 hover:bg-gray-300">
-              <span className="text-black">{addon.name}</span>
-              <input
-                type="number"
-                min={0}
-                onChange={e => updateAddon(addon.id, +e.target.value)}
-                className="input-field w-20 border border-gray-400 rounded p-1 bg-gray-100 text-black focus:ring-2 focus:ring-red-500"
-              />
-            </div>
-          ))}
+         {addons.map(addon => {
+  const quantity = getAddonQuantity(addon.id);
+
+  return (
+    <div
+      key={addon.id}
+      className="amenity-row flex items-center justify-between p-2 border border-gray-400 rounded bg-gray-100 max-w-sm"
+    >
+      <span className="text-gray-800">{addon.name}</span>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() =>
+            updateAddon(addon.id, Math.max(0, quantity - 1))
+          }
+          className="w-7 h-7 flex items-center justify-center rounded border border-gray-400 bg-gray-100 hover:bg-gray-200 text-black"
+        >
+          −
+        </button>
+
+        <span className="w-5 text-center text-black text-sm font-medium">
+          {quantity}
+        </span>
+
+        <button
+          type="button"
+          onClick={() =>
+            updateAddon(addon.id, quantity + 1)
+          }
+          className="w-7 h-7 flex items-center justify-center rounded border border-gray-400 bg-gray-100 hover:bg-gray-200 text-black"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+})}
+
+
+
         </div>
 
         <button
@@ -398,22 +517,30 @@ export default function ReservationsPage() {
         </button>
       </section>
 
-      {/* ============ MY RESERVATIONS ============ */}
+      {message && <p className="text-red-500 mt-4">{message}</p>}
+
+      {/* MY RESERVATIONS */}
       <section className="my-reservations space-y-4">
         <h1 className="page-title text-2xl font-bold text-white">Moje rezervacije</h1>
-
         <DataTable
           data={paginatedData}
           columns={columns}
-          // onRowClick={row => router.push(`/reservations/${row.id}`)}
-          onEdit={row => row.status === "PENDING" && setFormData(row)}
+          onEdit={row => {
+            if (row.status === "PENDING") {
+              setFormData(row);
+              setSelectedAddons(row.amenities.map(a => ({ amenityId: a.id, quantity: a.quantity })));
+            }
+          }}
           className="data-table bg-gray-100 text-white"
         />
 
+        {/* Modal za uređivanje */}
         <Modal
           isOpen={!!formData}
           onClose={() => setFormData(null)}
           title="Uredi rezervaciju"
+      
+        
         >
           {formData && (
             <div className="space-y-5 py-2">
@@ -445,22 +572,52 @@ export default function ReservationsPage() {
                   />
                 </div>
               </div>
+
+              {/* Edit addons */}
+              <h3 className="mt-4 mb-2 text-sm font-semibold text-gray-600">Dodatne usluge</h3>
+              <div className="space-y-2">
+                {addons.map(addon => {
+                  const existing = selectedAddons.find(a => a.amenityId === addon.id);
+                  const quantity = existing ? existing.quantity : 0;
+                  return (
+                    <div key={addon.id} className="amenity-row flex items-center justify-between p-2 border border-gray-400 rounded bg-gray-100 hover:bg-gray-200">
+                      <span className="text-gray-800">{addon.name}</span>
+                      <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateAddon(addon.id, Math.max(0, quantity - 1))}
+                        className="w-7 h-7 flex items-center justify-center rounded border border-gray-400 bg-gray-100 hover:bg-gray-200 text-black"
+                      >
+                        −
+                      </button>
+
+                      <span className="w-5 text-center text-black text-sm font-medium">
+                        {quantity}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => updateAddon(addon.id, quantity + 1)}
+                        className="w-7 h-7 flex items-center justify-center rounded border border-gray-400 bg-gray-100 hover:bg-gray-200 text-black"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    </div>
+                  );
+                })}
+              </div>
+
               <div className="flex gap-3 justify-end w-full border-t border-[#262626] pt-4 mt-4">
-                <button
-                  className="btn-secondary"
-                  onClick={() => setFormData(null)}
-                >
-                  Odustani
-                </button>
-                <button className="btn-primary px-6" onClick={handleSave}>
-                  Spremi promjene
-                </button>
+                <button className="btn-secondary" onClick={() => setFormData(null)}>Odustani</button>
+                <button className="btn-primary px-6" onClick={handleSave}>Spremi promjene</button>
               </div>
             </div>
           )}
         </Modal>
 
-        <Pagination
+             <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}

@@ -3,26 +3,29 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-interface Article {
+interface Addon {
   id: number;
-  title: string;
+  name: string;
+  price: number;
   description: string;
 }
 
-export default function ArticlePage() {
+export default function AddonPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const [article, setArticle] = useState<Article | null>(null);
+  const [addon, setAddon] = useState<Addon | null>(null);
 
- 
   useEffect(() => {
-    fetch(`/api/articles/${id}`)
-      .then((res) => res.json())
-      .then(setArticle)
+    fetch(`/api/addons/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Dodatak nije pronađen");
+        return res.json();
+      })
+      .then(setAddon)
       .catch(console.error);
   }, [id]);
 
-  if (!article) {
+  if (!addon) {
     return <div className="dashboard-main">Učitavanje...</div>;
   }
 
@@ -31,35 +34,26 @@ export default function ArticlePage() {
       <div
         style={{
           background: "#1a1a1a",
-          padding: "24px",
+          padding: "20px",
           borderRadius: "12px",
-          maxWidth: "700px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+          maxWidth: "600px",
           margin: "0 auto",
           color: "#fff",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
         }}
       >
-        <h1 style={{ marginBottom: "16px", fontSize: "1.8rem" }}>
-          {article.title}
-        </h1>
+        <h1 style={{ marginBottom: "10px", fontSize: "1.8rem" }}>{addon.name}</h1>
 
-        <p
-          style={{
-            lineHeight: 1.6,
-            opacity: 0.9,
-            wordBreak: "break-word",
-            overflowWrap: "anywhere",
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          {article.description}
-        </p>
-
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+          <strong>Cijena (€):</strong> {addon.price}
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+          <strong>Opis:</strong> {addon.description}
+        </div>
 
         <button
           onClick={() => router.back()}
           style={{
-            marginTop: "24px",
             background: "#e11d48",
             color: "#fff",
             padding: "10px 16px",
@@ -67,6 +61,7 @@ export default function ArticlePage() {
             borderRadius: "8px",
             cursor: "pointer",
             fontWeight: 600,
+            marginTop: "15px",
           }}
         >
           ← Natrag

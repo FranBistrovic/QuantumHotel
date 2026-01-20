@@ -30,7 +30,6 @@ export default function UsersPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Popravljen tip za sortiranje bez errora
   const [sortConfig, setSortConfig] = useState<{
     key: keyof User;
     direction: "asc" | "desc";
@@ -74,51 +73,47 @@ export default function UsersPage() {
     const isNew = !formData.id || formData.id === 0;
 
     try {
-      const payload = {
-        ...formData,
-        username: formData.username, // Osiguravamo da se šalje za update
-        password: isNew ? "Test1234" : undefined,
-        provider: isNew ? "LOCAL" : undefined,
-        enabled: formData.enabled === true,
-        accountNonLocked: formData.enabled === true,
-      };
-
-      let res: Response;
       if (isNew) {
-        res = await fetch("/api/admin/users", {
+        const res = await fetch("/api/admin/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({
+            ...formData,
+            password: "Test1234",
+            provider: "LOCAL",
+            enabled: formData.enabled ?? true,
+            accountNonLocked: formData.enabled ?? true,
+          }),
         });
+        if (!res.ok) throw new Error("Neuspješno kreiranje korisnika");
       } else {
-        res = await fetch(`/api/admin/users/${formData.id}`, {
+        const originalUser = users.find((u) => u.id === formData.id);
+        const { role, ...basicData } = formData;
+
+        const res = await fetch(`/api/admin/users/${formData.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(basicData),
         });
+        if (!res.ok) throw new Error("Neuspješno ažuriranje profila");
 
-        // Poseban poziv za ulogu ako je promijenjena
-        const originalUser = users.find((u) => u.id === formData.id);
-        if (originalUser && originalUser.role !== formData.role) {
-          await fetch(`/api/admin/users/${formData.id}/role`, {
+        if (originalUser && originalUser.role !== role) {
+          const roleRes = await fetch(`/api/admin/users/${formData.id}/role`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ role: formData.role }),
+            body: JSON.stringify({ role }),
           });
+          if (!roleRes.ok)
+            throw new Error("Profil ažuriran, ali promjena uloge nije uspjela");
         }
       }
 
-      if (res.ok) {
-        await fetchUsers();
-        setMessage(isNew ? "✅ Korisnik kreiran!" : "✅ Promjene spremljene!");
-        setFormData(null);
-        setTimeout(() => setMessage(""), 3000);
-      } else {
-        const errorData = await res.json().catch(() => ({}));
-        setMessage(`❌ Greška: ${errorData.message || "Neuspješno spremanje"}`);
-      }
-    } catch (err) {
-      setMessage("⚠️ Greška pri komunikaciji s API-jem.");
+      await fetchUsers();
+      setMessage(isNew ? "✅ Korisnik kreiran!" : "✅ Promjene spremljene!");
+      setFormData(null);
+      setTimeout(() => setMessage(""), 3000);
+    } catch (err: any) {
+      setMessage(`❌ ${err.message || "Greška pri spremanju"}`);
     }
   };
 
@@ -177,7 +172,7 @@ export default function UsersPage() {
           <div className="h-10 w-10 rounded-full bg-[#1a1a1a] border border-[#262626] overflow-hidden flex-shrink-0">
             {row.imageUrl ? (
               <img
-                src={getAvatarUrl(row.imageUrl)!}
+                src={getAvatarUrl(row.imageUrl)}
                 alt=""
                 className="h-full w-full object-cover"
               />
