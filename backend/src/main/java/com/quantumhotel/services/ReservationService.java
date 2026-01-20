@@ -125,6 +125,12 @@ public class ReservationService {
                 if (amenityOpt.isEmpty()) {
                     continue;
                 }
+                if (req.getQuantity() == 0) {
+                    r.getReservationAmenities().removeIf(
+                            ra -> ra.getAmenity().getId().equals(req.getAmenityId())
+                    );
+                    continue;
+                }
 
                 ReservationAmenity ra = r.getReservationAmenities().stream()
                         .filter(a -> a.getAmenity().getId().equals(req.getAmenityId()))

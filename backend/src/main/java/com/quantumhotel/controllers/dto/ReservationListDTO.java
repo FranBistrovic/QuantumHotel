@@ -27,6 +27,7 @@ public class ReservationListDTO {
     @Setter
     public static class AmenityItem {
         private Long id;
+        private Long amn_id;
         private String name;
         private int quantity;
         private BigDecimal price;
@@ -49,6 +50,7 @@ public class ReservationListDTO {
                     r.getReservationAmenities().stream().map(ra -> {
                         AmenityItem a = new AmenityItem();
                         a.setId(ra.getId());
+                        a.setAmn_id(ra.getAmenity().getId());
                         a.setName(ra.getAmenity().getName());
                         a.setQuantity(ra.getQuantity());
                         a.setPrice(ra.getAmenity().getPrice());
