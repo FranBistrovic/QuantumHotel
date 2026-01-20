@@ -19,7 +19,7 @@ export default async function AdminLayout({
   }
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/users/me`,
+    `${process.env.API_INTERNAL_URL}/api/users/me`,
     {
       method: "GET",
       headers: {

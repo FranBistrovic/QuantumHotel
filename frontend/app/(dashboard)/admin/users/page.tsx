@@ -39,9 +39,9 @@ export default function UsersPage() {
   const itemsPerPage = 10;
 
   const getAvatarUrl = (path?: string) => {
-    if (!path) return null;
-    if (path.startsWith("http")) return path;
-    return `http://localhost:8080${path}`;
+    if (!path) return "/default-avatar.jpg";    
+if (path.startsWith("http")) return path;
+    return `${process.env.NEXT_PUBLIC_API_URL}${path}`;
   };
 
   useEffect(() => {

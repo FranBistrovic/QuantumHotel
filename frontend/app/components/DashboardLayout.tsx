@@ -21,8 +21,10 @@ type Role = "user" | "staff" | "admin";
 
 export function DashboardLayout({
   children,
+  isStaff,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode,
+  isStaff: boolean;
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setSidebarOpen] = useState(false);

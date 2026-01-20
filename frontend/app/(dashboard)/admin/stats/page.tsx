@@ -242,7 +242,11 @@ export default function StatisticsPage() {
                         backgroundColor: "#0f0f0f",
                         border: "1px solid #262626",
                       }}
-                      formatter={(value: number) => [`${value.toLocaleString()} €`, "Prihod"]}
+formatter={(value?: number) => [
+  `${(value ?? 0).toLocaleString()} €`,
+  "Prihod",
+]}
+
                     />
                     <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
                   </BarChart>
