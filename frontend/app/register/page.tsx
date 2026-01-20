@@ -7,10 +7,11 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setIsLoading(true);
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
@@ -23,9 +24,6 @@ export default function RegisterPage() {
         setMessage(
           "✅ Uspješna registracija! Molimo Vas potvrdite svoj profil putem e-mail-a."
         );
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 800);
       } else {
         const text = await response.text();
         try {
@@ -40,12 +38,16 @@ export default function RegisterPage() {
     } catch (err) {
       setMessage("⚠️ Server nije dostupan.");
     }
+    finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="register-wrapper1">
       <div className="register-box1">
         <h1 className="register-title1">Registracija</h1>
+        {isLoading && <div className="loading-bar" />}
         <form onSubmit={handleRegister} className="register-form1">
           <input
             type="text"
@@ -92,7 +94,7 @@ export default function RegisterPage() {
           Continue with Google
         </a>
 
-        {message && <p className="message1">{message}</p>}
+        {message && <p className="message1 text-black">{message}</p>}
       </div>
     </div>
   );

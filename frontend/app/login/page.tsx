@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -63,6 +64,15 @@ export default function LoginPage() {
           <button type="submit" className="login-button2">
             Prijavi se
           </button>
+
+           <div className="flex justify-center mt-2">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-black text-muted-foreground hover:text-primary hover:underline"
+              >
+                Zaboravljena lozinka?
+              </Link>
+            </div>
         </form>
         <a href="/oauth2/authorization/google" className="google-button2">
           <svg

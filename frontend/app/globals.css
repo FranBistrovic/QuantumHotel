@@ -995,3 +995,18 @@ body {
   color: #9b1c31;
   text-align: center;
 }
+
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  animation: loading 1.2s infinite;
+}
+
+@keyframes loading {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
