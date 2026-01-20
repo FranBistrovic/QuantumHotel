@@ -81,64 +81,62 @@ export default function HomePage() {
     );
   }
 
-  if (user && (!user.city || !user.dateOfBirth || !user.gender)) {
-    return (
-      <div className="modal-overlay" >
-    <div className="modal-content p-"  style={{paddingBottom: "40px" , paddingLeft:"40px", paddingRight:"40px"}}>
-      <h2 className="login-title text-center" >Dopunite svoje podatke</h2>
-      <form onSubmit={handleSubmit} className="login-form">
-        <input
-          type="text"
-          placeholder="Grad"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          required
-          className="login-input"
-        />
+ if (user && (!user.city || !user.dateOfBirth || !user.gender)) {
+  return (
+    <div className="modal-overlay3">
+      <div className="modal-content3">
+        <h2 className="login-title3">Dopunite svoje podatke</h2>
+        <form onSubmit={handleSubmit} className="login-form3">
+          <input
+            type="text"
+            placeholder="Grad"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            required
+            className="login-input3"
+          />
+          <input
+            type="date"
+            placeholder="Datum rođenja"
+            value={dateOfBirth}
+            onChange={(e) => setDateOfBirth(e.target.value)}
+            required
+            className="login-input3"
+          />
+          <select
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            required
+            className="login-input3"
+          >
+            <option value="">Odaberite spol</option>
+            <option value="MALE">Muški</option>
+            <option value="FEMALE">Ženski</option>
+            <option value="OTHER">Drugi</option>
+          </select>
 
-        <input
-          type="date"
-          placeholder="Datum rođenja"
-          value={dateOfBirth}
-          onChange={(e) => setDateOfBirth(e.target.value)}
-          required
-          className="login-input"
-        />
+          <button type="submit" className="login-button3">
+            Spremi
+          </button>
 
-        <select
-          value={gender}
-          onChange={(e) => setGender(e.target.value)}
-          required
-          className="login-input"
-        >
-          <option value="">Odaberite spol</option>
-          <option value="MALE">Muški</option>
-          <option value="FEMALE">Ženski</option>
-          <option value="OTHER">Drugi</option>
-        </select>
-
-        <button type="submit" className="login-button">
-          Spremi
-        </button>
-
-        {message && <p className="login-message">{message}</p>}
-      </form>
+          {message && <p className="login-message3">{message}</p>}
+        </form>
+      </div>
     </div>
-  </div>
+  );
+}
 
-    );
-  }
 
   const mapUrl = `https://www.google.com/maps?q=${location.latitude},${location.longitude}&z=15&output=embed`;
 
   return (
     <div className="space-y-12 p-6">
       {/* Uvod */}
-      <section className="bg-gray-100 p-6 rounded-2xl shadow-lg">
+      <section className=" ">
         <h2 className="text-4xl font-bold text-[#800020] mb-4">
           Dobrodošli u Quantum Hotel
         </h2>
-        <p className="text-lg text-gray-800">
+        <p className="text-lg text-white-800">
           Quantum Hotel nudi spoj luksuza i modernog komfora. Smješten u samom
           srcu grada, idealno je mjesto za opuštanje, poslovne sastanke i
           stvaranje nezaboravnih uspomena.
@@ -146,18 +144,18 @@ export default function HomePage() {
       </section>
 
       {/* Kontakt */}
-      <section className="bg-gray-100 p-6 rounded-2xl shadow-lg">
-        <h3 className="text-2xl font-semibold text-[#800020] mb-2">
+      <section className=" ">
+        <h3 className="text-2xl font-semibold text-[#800020] mb-4">
           Kontakt
         </h3>
-        <p>📍 Adresa: Ulica Mira 42, Zagreb</p>
-        <p>📞 Telefon: +385 1 234 5678</p>
-        <p>✉️ Email: info@quantumhotel.hr</p>
+        <p className="text-white-800">📍 Adresa: Ulica Mira 42, Zagreb</p>
+        <p className="text-white-800">📞 Telefon: +385 1 234 5678</p>
+        <p className="text-white-800">✉️ Email: info@quantumhotel.hr</p>
       </section>
 
       {/* Galerija */}
       <section className="gallery-section">
-        <h3 className="text-2xl font-semibold mb-4">Galerija</h3>
+        <h3 className="text-2xl font-semibold mb-4 text-[#800020]">Galerija</h3>
         <div className="gallery-container flex gap-6">
           <div className="gallery-large relative w-1/2 h-[400px] rounded-2xl overflow-hidden shadow-lg">
             <Image
@@ -189,7 +187,7 @@ export default function HomePage() {
       </section>
 
       {/* Google Maps */}
-      <section className="bg-gray-100 p-6 rounded-2xl shadow-lg">
+      <section className="">
         <h3 className="text-2xl font-semibold text-[#800020] mb-4">
           Naša lokacija
         </h3>

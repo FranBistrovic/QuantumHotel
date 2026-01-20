@@ -40,10 +40,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-wrapper">
-      <div className="login-box">
-        <h1 className="login-title">Prijava</h1>
-        <form onSubmit={handleLogin} className="login-form">
+    <div className="login-wrapper2">
+      <div className="login-box2">
+        <h1 className="login-title2">Prijava</h1>
+        <form onSubmit={handleLogin} className="login-form2">
           <input
             type="text"
             placeholder="Email"
@@ -60,13 +60,13 @@ export default function LoginPage() {
             className="login-input"
             required
           />
-          <button type="submit" className="login-button">
+          <button type="submit" className="login-button2">
             Prijavi se
           </button>
         </form>
-        <a href="/oauth2/authorization/google" className="google-button">
+        <a href="/oauth2/authorization/google" className="google-button2">
           <svg
-            className="google-icon"
+            className="google-icon2"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -91,7 +91,7 @@ export default function LoginPage() {
           Continue with Google
         </a>
 
-        {message && <p className="login-message">{message}</p>}
+        {message && <p className="login-message2">{message}</p>}
       </div>
 
     </div>

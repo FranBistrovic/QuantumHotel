@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -18,7 +19,7 @@ import {
   LogOut,
   Trash2,
 } from "lucide-react";
-import Image from "next/image";
+
 
 type Role = "user" | "staff" | "admin";
 
@@ -158,6 +159,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         {/* HEADER */}
         <div className="sidebar-header" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "30px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.03)", position: "relative" }}>
           <Link href="/" style={{ textDecoration: "none", color: "inherit", textAlign: "center" }}>
+            
+            <Image
+              src="/crvenkasto_bordo_logo.png"
+              alt="Quantum Hotel Logo"
+              width={90}
+              height={90}
+              style={{ marginBottom: "12px", objectFit: "contain",justifySelf: "center", borderRadius:"50%" }}
+            />
+            
             <h1 style={{ margin: 0, fontSize: "1.4rem", letterSpacing: "2px", fontWeight: "700", cursor: "pointer" }}>Quantum Hotel</h1>
 {pathname !== "/" && (
   <span
