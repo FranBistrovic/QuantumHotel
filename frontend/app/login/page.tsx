@@ -28,7 +28,7 @@ export default function LoginPage() {
         try {
           const json = JSON.parse(text);
           setMessage(
-            "❌ Greška: " + (json.error || json.message || "Nepoznata greška.")
+            "❌ Greška: " + (json.error || json.message || "Nepoznata greška."),
           );
         } catch {
           setMessage("❌ Greška: " + text);
@@ -91,9 +91,12 @@ export default function LoginPage() {
           Continue with Google
         </a>
 
-        {message && <p className="login-message2">{message}</p>}
+        {message && (
+          <p className="login-message2" style={{ color: "black" }}>
+            {message}
+          </p>
+        )}
       </div>
-
     </div>
   );
 }
