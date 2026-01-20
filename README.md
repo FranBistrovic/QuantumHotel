@@ -10,17 +10,19 @@ Za rješavanje tih problema razvijen je projekt Quantum Hotel. Ovaj sustav omogu
 Osim toga, sustav podržava integraciju s vanjskim uslugama kao što su Google Maps za preciznu lokaciju hotela i naprednu statistiku za bolje planiranje i donošenje poslovnih odluka. Kroz jednostavno sučelje i automatizirane funkcionalnosti, Quantum Hotel poboljšava operativnu efikasnost i omogućuje bolju konkurentnost na tržištu.
 
 # Funkcijski zahtjevi
-Aplikacija Quantum Hotel imat će početnu stranicu koja će korisnicima omogućiti jednostavan pristup prijavi i pregledu hotelske ponude.
-Prijava će biti omogućena isključivo putem Google računa korištenjem OAuth2 autentifikacije.
+Aplikacija Quantum Hotel sadrži početnu stranicu koja korisnicima omogućuje jednostavan pristup prijavi i pregledu hotelske ponude. Prijava je implementirana ili putem Google računa korištenjem OAuth2 autentifikacije ili putem vlastitog korisničkog računa nakon registracije, čime je osigurana visoka razina sigurnosti i jednostavnosti za korisnike.
 
-Korisnici će, ovisno o svojoj ulozi, imati različite mogućnosti unutar sustava. Gost će moći pregledavati dostupne smještajne jedinice, birati željeni termin i broj osoba te izvršiti rezervaciju. Uz to, moći će odabrati dodatne hotelske usluge poput doručka, parkiranja ili wellness sadržaja. Sustav će automatski provjeravati dostupnost soba i sprječavati preklapanje rezervacija.
+Korisnici, ovisno o svojoj dodijeljenoj ulozi, imaju različite mogućnosti unutar sustava:
 
-Na stranici će biti integrirana Google Maps usluga koja će omogućiti prikaz lokacije hotela i obližnjih sadržaja. Korisnicima će biti dostupni članci o dodatnim aktivnostima i ponudi hotela, a sve informacije bit će pregledne i jednostavne za korištenje.
+Gost: Može pregledavati dostupne smještajne jedinice, birati željeni termin i broj osoba te izvršiti rezervaciju. Sustav nudi opciju odabira dodatnih hotelskih usluga poput doručka, parkiranja ili wellness sadržaja. Automatizirana logika sustava provjerava dostupnost soba u stvarnom vremenu i onemogućuje preklapanje rezervacija.
 
-Djelatnici će imati mogućnost unosa i ažuriranja podataka o sobama, kategorijama i dodatnim uslugama, kao i pristup pregledu i potvrdi rezervacija. Administrator će imati sve ovlasti nad sustavom, uključujući upravljanje korisnicima i generiranje statističkih podataka o poslovanju.
-Sustav će omogućiti preuzimanje tih podataka u formatima PDF, XML i XLSX.
+Djelatnik: Ima ovlasti za unos i ažuriranje podataka o sobama, kategorijama smještaja i dodatnim uslugama. Također, djelatnici imaju pristup pregledu i potvrdi svih pristiglih rezervacija.
 
-Svi podaci o korisnicima, rezervacijama i uslugama bit će pohranjeni u bazu podataka, a sustav će biti siguran, jednostavan za korištenje i uvijek dostupan.
+Administrator: Posjeduje pune ovlasti nad sustavom, uključujući upravljanje korisničkim računima i ulogama. Ključna funkcija administratora je generiranje i analiza statističkih podataka o poslovanju, uz mogućnost preuzimanja izvještaja u standardiziranim formatima (PDF, XML i XLSX).
+
+Na stranici je integrirana Google Maps usluga koja omogućuje precizan prikaz lokacije hotela i obližnjih sadržaja. Korisnicima su dostupni informativni članci o dodatnim aktivnostima i ponudi hotela, a cijelo je sučelje dizajnirano da bude pregledno i intuitivno.
+
+Svi podaci o korisnicima, rezervacijama i uslugama pohranjeni su u centraliziranu bazu podataka. Sustav je u potpunosti operativan, siguran i dizajniran za stalnu dostupnost.
 
 # Tehnologije
 #Instalacija
@@ -33,9 +35,6 @@ Svi podaci o korisnicima, rezervacijama i uslugama bit će pohranjeni u bazu pod
 [Marko Majstorović](https://github.com/marko-majstorovic)  
 [Marija Špoljarić](https://github.com/marija-spoljaric)  
 [Matija Tušek](https://github.com/matija-tusek)  
-
-# Kontribucije
->Pravila ovise o organizaciji tima i su često izdvojena u CONTRIBUTING.md
 
 # 📝 Kodeks ponašanja [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [KODEKS PONAŠANJA STUDENATA FAKULTETA ELEKTROTEHNIKE I RAČUNARSTVA SVEUČILIŠTA U ZAGREBU](https://www.fer.hr/_download/repository/Kodeks_ponasanja_studenata_FER-a_procisceni_tekst_2016%5B1%5D.pdf).  
