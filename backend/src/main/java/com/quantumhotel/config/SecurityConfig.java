@@ -50,10 +50,12 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Public pages and assets
-                        .requestMatchers("/api/auth/**", "/oauth2/**", "/css/**", "/js/**", "/images/**", "/logout").permitAll()
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/css/**", "/js/**", "/images/**", "/logout", "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/faq/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/articles/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/support/questions").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/room-categories").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/room-categories/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/room-categories/available**").permitAll()
 
                         // User reservation routes
@@ -68,7 +70,7 @@ public class SecurityConfig {
                         //Admin/staff rooms routes
                         .requestMatchers(HttpMethod.GET, "/api/room-categories/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers(HttpMethod.GET, "/api/rooms/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/addons/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/addons/**").permitAll()
 
                         // Admin/Staff reservation routes
                         .requestMatchers(HttpMethod.GET, "/api/admin/reservations/**").hasAnyRole("ADMIN", "STAFF")

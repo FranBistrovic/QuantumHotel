@@ -24,7 +24,7 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     public void sendVerificationEmail(String to, String token) {
-        String link = domain + "/api/auth/verify?token=" + token;
+        String link = domain + "/verify?token=" + token;
 
         String html = emailTemplate(
                 "Welcome to Quantum Hotel ✨",
@@ -47,6 +47,7 @@ public class EmailService {
                 "Reset Password",
                 link
         );
+        sendHtmlEmail(to, "Reset your Quantum Hotel Password", html);
     }
     public void sendSupportQuestion(String senderEmail, String senderName, String subject, String message) {
         SimpleMailMessage mailMessage = new SimpleMailMessage();
