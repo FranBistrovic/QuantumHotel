@@ -114,6 +114,20 @@ public class ReservationService {
             );
         }
 
+        List<Reservation> conflicts =
+                reservationRepository.findConfirmedOverlaps(
+                        r.getUnit().getId(),
+                        r.getDateFrom(),
+                        r.getDateTo()
+                );
+
+        if (!conflicts.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Unit is already booked in selected period"
+            );
+        }
+
         if (dto.getDateFrom() != null) r.setDateFrom(dto.getDateFrom());
         if (dto.getDateTo() != null) r.setDateTo(dto.getDateTo());
         if (dto.getAmenities() != null) {
@@ -196,6 +210,20 @@ public class ReservationService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Only PENDING reservations can be modified"
+            );
+        }
+
+        List<Reservation> conflicts =
+                reservationRepository.findConfirmedOverlaps(
+                        r.getUnit().getId(),
+                        r.getDateFrom(),
+                        r.getDateTo()
+                );
+
+        if (!conflicts.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Unit is already booked in selected period"
             );
         }
 
