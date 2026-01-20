@@ -114,19 +114,7 @@ public class ReservationService {
             );
         }
 
-        List<Reservation> conflicts =
-                reservationRepository.findConfirmedOverlaps(
-                        r.getUnit().getId(),
-                        r.getDateFrom(),
-                        r.getDateTo()
-                );
 
-        if (!conflicts.isEmpty()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Unit is already booked in selected period"
-            );
-        }
 
         if (dto.getDateFrom() != null) r.setDateFrom(dto.getDateFrom());
         if (dto.getDateTo() != null) r.setDateTo(dto.getDateTo());
@@ -152,7 +140,19 @@ public class ReservationService {
                 ra.setQuantity(req.getQuantity());
             }
         }
+        List<Reservation> conflicts =
+                reservationRepository.findConfirmedOverlaps(
+                        r.getUnit().getId(),
+                        r.getDateFrom(),
+                        r.getDateTo()
+                );
 
+        if (!conflicts.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Unit is already booked in selected period"
+            );
+        }
         return reservationRepository.save(r);
     }
 
@@ -213,6 +213,15 @@ public class ReservationService {
             );
         }
 
+
+
+        // Update dates if provided
+        if (dto.getDateFrom() != null) r.setDateFrom(dto.getDateFrom());
+        if (dto.getDateTo() != null) r.setDateTo(dto.getDateTo());
+        r.setProcessedAt(Instant.now());
+        r.setProcessedBy(admin);
+
+
         List<Reservation> conflicts =
                 reservationRepository.findConfirmedOverlaps(
                         r.getUnit().getId(),
@@ -226,12 +235,6 @@ public class ReservationService {
                     "Unit is already booked in selected period"
             );
         }
-
-        // Update dates if provided
-        if (dto.getDateFrom() != null) r.setDateFrom(dto.getDateFrom());
-        if (dto.getDateTo() != null) r.setDateTo(dto.getDateTo());
-        r.setProcessedAt(Instant.now());
-        r.setProcessedBy(admin);
         // Notify the user about the update
         emailService.sendReservationUpdated(
                 r.getUser().getEmail(),
@@ -239,7 +242,6 @@ public class ReservationService {
                 r.getDateFrom(),
                 r.getDateTo()
         );
-
         return reservationRepository.save(r);
     }
 
