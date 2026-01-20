@@ -91,7 +91,7 @@ public class EmailService {
         String html = emailTemplate(
                 "Reservation Updated",
                 "Your reservation #" + reservationId + " has been updated.",
-                "New date: " +"from: " + from +"to: "+toDate,
+                "New date:<br>" + "From: " + from +" to: "+toDate,
                 null,
                 null
         );

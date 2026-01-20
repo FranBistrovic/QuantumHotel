@@ -15,4 +15,5 @@ public class AccommodationCategoryDTO {
     private BigDecimal price;
     private LocalTime checkInTime;
     private LocalTime checkOutTime;
+    private String imagePath;
 }

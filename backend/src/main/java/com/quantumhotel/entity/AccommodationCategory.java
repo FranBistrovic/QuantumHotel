@@ -39,4 +39,7 @@ public class AccommodationCategory {
 
     @Column(name = "cat_check_out")
     private LocalTime checkOutTime;
+
+    @Column(name = "cat_image")
+    private String imagePath;
 }

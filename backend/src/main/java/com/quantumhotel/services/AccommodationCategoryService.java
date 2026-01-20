@@ -7,9 +7,15 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -73,6 +79,7 @@ public class AccommodationCategoryService {
         dto.setPrice(entity.getPrice());
         dto.setCheckInTime(entity.getCheckInTime());
         dto.setCheckOutTime(entity.getCheckOutTime());
+        dto.setImagePath(entity.getImagePath());
         return dto;
     }
 
@@ -84,5 +91,33 @@ public class AccommodationCategoryService {
         if (dto.getUnitsNumber() != null) entity.setUnitsNumber(dto.getUnitsNumber());
         if (dto.getCheckInTime() != null) entity.setCheckInTime(dto.getCheckInTime());
         if (dto.getCheckOutTime() != null) entity.setCheckOutTime(dto.getCheckOutTime());
+    }
+
+    public String uploadImage(Long categoryId, MultipartFile image) throws IOException {
+
+        AccommodationCategory category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        if (image.isEmpty()) {
+            throw new RuntimeException("Empty file");
+        }
+
+        if (!image.getContentType().startsWith("image/")) {
+            throw new RuntimeException("Invalid file type");
+        }
+
+        String uploadDir = "uploads/categories/";
+        Files.createDirectories(Paths.get(uploadDir));
+
+        String filename = UUID.randomUUID() + "_" + image.getOriginalFilename();
+        Path filePath = Paths.get(uploadDir + filename);
+
+        Files.write(filePath, image.getBytes());
+
+        String relativePath = "/uploads/categories/" + filename;
+        category.setImagePath(relativePath);
+        categoryRepository.save(category);
+
+        return relativePath;
     }
 }
