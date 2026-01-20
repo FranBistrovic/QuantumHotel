@@ -43,9 +43,18 @@ export default function ArticlePage() {
           {article.title}
         </h1>
 
-        <p style={{ lineHeight: 1.6, opacity: 0.9 }}>
+        <p
+          style={{
+            lineHeight: 1.6,
+            opacity: 0.9,
+            wordBreak: "break-word",
+            overflowWrap: "anywhere",
+            whiteSpace: "pre-wrap",
+          }}
+        >
           {article.description}
         </p>
+
 
         <button
           onClick={() => router.back()}

@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { DataTable, Column } from "../../components/DataTable";
-import { FilterBar } from "../../components/FilterBar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Users, Bed, Clock, Search } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import Loading from "./loading";
+import { Column } from "../../components/DataTable";
+
 
 interface RoomCategory {
   id: number;
@@ -14,9 +20,11 @@ interface RoomCategory {
   price: number;
   checkInTime: string;
   checkOutTime: string;
+  imagePath: string;
 }
 
 
+/* ---------- helper za error poruke ---------- */
 const getErrorMessage = async (response: Response) => {
   if (response.status === 401) return "❌ Niste prijavljeni.";
   if (response.status === 403) return "⛔ Nemate ovlasti.";
@@ -34,6 +42,8 @@ export default function RoomCategoriesPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  /* ---------- GET /api/room-categories ---------- */
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -42,7 +52,13 @@ export default function RoomCategoriesPage() {
         const res = await fetch(`/api/room-categories?t=${Date.now()}`);
 
         if (!res.ok) {
-          setMessage(await getErrorMessage(res));
+          if (res.status === 401) {
+            setMessage("Niste prijavljeni.");
+          } else if (res.status === 403) {
+            setMessage("Nemate ovlasti.");
+          } else {
+            setMessage("Greška pri učitavanju.");
+          }
           return;
         }
 
@@ -50,7 +66,7 @@ export default function RoomCategoriesPage() {
         setCategories(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(err);
-        setMessage("⚠️ Greška pri učitavanju kategorija.");
+        setMessage("Greška pri učitavanju kategorija.");
       } finally {
         setLoading(false);
       }
@@ -63,6 +79,7 @@ export default function RoomCategoriesPage() {
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  /* ---------- TABLICA ---------- */
   const columns: Column<RoomCategory>[] = [
     {
       key: "name",
@@ -102,38 +119,119 @@ export default function RoomCategoriesPage() {
   ];
 
   return (
-    <div className="dashboard-main">
-      <div className="page-header flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#262626] pb-6">
-        <h1 className="page-title text-2xl font-bold text-white tracking-tight">
-          Kategorije soba
-        </h1>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Kategorije soba
+          </h1>
+          <p className="text-muted-foreground">
+            Pregledajte dostupne tipove soba i njihove karakteristike
+          </p>
+        </div>
+
+        {/* Search */}
+        <div className="mb-8">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Pretraži kategorije..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
         {message && (
-          <p className="text-sm text-red-400 mt-2">{message}</p>
+          <div className="mb-6 p-4 rounded-lg bg-destructive/10 text-destructive border border-destructive/20">
+            {message}
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading ? (
+          <Loading />
+        ) : filteredData.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">
+              {searchTerm
+                ? "Nema rezultata za pretragu."
+                : "Nema dostupnih kategorija."}
+            </p>
+          </div>
+        ) : (
+          /* Room Cards Grid */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredData.map((category) => (
+              <Link
+                key={category.id}
+                href={`/room-categories/${category.id}`}
+                className="group"
+              >
+                <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-primary/50 h-full">
+                  {/* Room Image */}
+                  <div className="relative aspect-video overflow-hidden bg-muted">
+                    {category.imagePath ? (
+                      <img
+                        src={ `${process.env.NEXT_PUBLIC_API_URL}${category.imagePath}` || "/placeholder.svg"}
+                        alt={category.name}
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Bed className="h-12 w-12 text-muted-foreground/50" />
+                      </div>
+                    )}
+                    {/* Price Badge */}
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-primary text-primary-foreground font-semibold px-3 py-1">
+                        {category.price} € / noć
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <CardContent className="p-6">
+                    {/* Title */}
+                    <h3 className="text-xl font-semibold text-foreground mb-4 group-hover:text-primary transition-colors">
+                      {category.name}
+                    </h3>
+
+                    {/* Details */}
+                    <div className="space-y-3 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        <span>Kapacitet: {category.capacity} osobe</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Bed className="h-4 w-4" />
+                        <span>
+                          {category.twinBeds ? "Odvojeni kreveti" : "Bračni krevet"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>
+                          Check-in {category.checkInTime?.slice(0, 5)} / Check-out{" "}
+                          {category.checkOutTime?.slice(0, 5)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Units Available */}
+                    <div className="mt-4 pt-4 border-t">
+                      <Badge variant="secondary">
+                        {category.unitsNumber} {category.unitsNumber === 1 ? "jedinica dostupna" : "jedinice dostupne"}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
-
-        <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl p-4 mb-4">
-      <FilterBar
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Pretraži kategorije..."
-        
-      />
-     
-</div>
-<div className="bg-[#0f0f0f] border border-[#262626] rounded-xl overflow-hidden shadow-2xl">
-      {loading ? (
-        <div className="p-10 text-center text-gray-400">Učitavanje...</div>
-      ) : (
-         
-        <DataTable
-          data={filteredData}
-          columns={columns}
-          actions={false}
-          className="data-table"
-        />
-      )}
-    </div>
     </div>
   );
 }

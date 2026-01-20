@@ -5,6 +5,7 @@ import { DataTable, Column } from "../../components/DataTable";
 import { Pagination } from "../../components/Pagination";
 import { useRouter } from "next/navigation";
 import { Modal } from "../../components/Modal";
+import { Bed } from "lucide-react";
 
 
 interface Reservation {
@@ -36,6 +37,7 @@ interface Room {
   price: number;
   categoryId: number;
   capacity: number;
+  imagePath: string;
 }
 
 interface Addon {
@@ -310,8 +312,8 @@ export default function ReservationsPage() {
       key: "categoryName",
       render: (_, row) => (
         <div className="flex flex-col">
-          <span className="font-medium text-black">{row.categoryName}</span>
-          <span className="text-sm text-gray-500">
+          <span className="font-medium text-white">{row.categoryName}</span>
+          <span className="text-sm text-white-500">
             {row.unitNumber ? `Soba ${row.unitNumber}` : "Nije dodijeljena"}
           </span>
         </div>
@@ -355,10 +357,11 @@ export default function ReservationsPage() {
       render: (_, row) => {
         if (!row.amenities || row.amenities.length === 0) return <span className="text-gray-400">—</span>;
         return (
+
           <ul className="text-sm space-y-1">
             {row.amenities.map(a => (
               <li key={a.id} className="flex justify-between gap-2">
-                <span className="text-gray-800">{a.name} × {a.quantity}</span>
+                <span className="text-white-800">{a.name} × {a.quantity}</span>
               </li>
             ))}
           </ul>
@@ -442,6 +445,19 @@ export default function ReservationsPage() {
             >
               <h4 className="font-semibold text-black">Soba {room.roomNumber}</h4>
               <p className="text-gray-800 mt-1">{room.capacity} osoba</p>
+
+              <p className="text-gray-800 mt-1">{room.price} €</p>
+              {room.imagePath ? (
+                      <img
+                        src={ `${process.env.NEXT_PUBLIC_API_URL}${room.imagePath}` || "/placeholder.svg"}
+                        alt={room.name}
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Bed className="h-12 w-12 text-muted-foreground/50" />
+                      </div>
+                    )}
             </div>
           ))}
         </div>
@@ -609,8 +625,6 @@ export default function ReservationsPage() {
           totalItems={filteredData.length}
         />
       </section>
-
-      //{message && <p className="text-red-500 mt-4">{message}</p>}
     </div>
   );
 }

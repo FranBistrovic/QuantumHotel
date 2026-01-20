@@ -160,7 +160,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className="sidebar-header" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "30px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.03)", position: "relative" }}>
           <Link href="/" style={{ textDecoration: "none", color: "inherit", textAlign: "center" }}>
             
-            <Image
+            <img
               src="/crvenkasto_bordo_logo.png"
               alt="Quantum Hotel Logo"
               width={90}
