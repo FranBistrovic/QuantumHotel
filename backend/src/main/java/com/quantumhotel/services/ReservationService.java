@@ -5,10 +5,7 @@ import com.quantumhotel.controllers.dto.ReservationCreateDTO;
 import com.quantumhotel.controllers.dto.ReservationDetailsDTO;
 import com.quantumhotel.controllers.dto.ReservationListDTO;
 import com.quantumhotel.controllers.dto.ReservationPatchDto;
-import com.quantumhotel.entity.AccommodationUnit;
-import com.quantumhotel.entity.Reservation;
-import com.quantumhotel.entity.ReservationAmenity;
-import com.quantumhotel.entity.ReservationStatus;
+import com.quantumhotel.entity.*;
 import com.quantumhotel.repository.*;
 import com.quantumhotel.services.EmailService;
 import com.quantumhotel.users.User;
@@ -20,7 +17,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -117,6 +116,28 @@ public class ReservationService {
 
         if (dto.getDateFrom() != null) r.setDateFrom(dto.getDateFrom());
         if (dto.getDateTo() != null) r.setDateTo(dto.getDateTo());
+        if (dto.getAmenities() != null) {
+            for (ReservationPatchDto.AmenityRequest req : dto.getAmenities()) {
+
+                Optional<Amenity> amenityOpt = amenityRepository.findById(req.getAmenityId());
+                if (amenityOpt.isEmpty()) {
+                    continue;
+                }
+
+                ReservationAmenity ra = r.getReservationAmenities().stream()
+                        .filter(a -> a.getAmenity().getId().equals(req.getAmenityId()))
+                        .findFirst()
+                        .orElseGet(() -> {
+                            ReservationAmenity newRa = new ReservationAmenity();
+                            newRa.setReservation(r);
+                            newRa.setAmenity(amenityOpt.get());
+                            r.getReservationAmenities().add(newRa);
+                            return newRa;
+                        });
+
+                ra.setQuantity(req.getQuantity());
+            }
+        }
 
         return reservationRepository.save(r);
     }
