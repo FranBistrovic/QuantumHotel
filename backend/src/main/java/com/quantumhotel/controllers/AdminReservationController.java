@@ -59,8 +59,7 @@ public class AdminReservationController {
             @RequestBody ReservationPatchDto dto,
             Authentication authentication
     ) {
-        String username = authentication.getName(); // or use your extractUsername() method
-        reservationService.patchAdmin(id, dto, username);
+        reservationService.patchAdmin(id, dto, extractUsername(authentication));
     }
 
     private String extractUsername(Authentication authentication) {
