@@ -55,8 +55,9 @@ public class StatisticsService {
         stats.setCancelledReservations((int) cancelledCount);
 
         // Calculate revenue
-        BigDecimal totalRevenue = calculateTotalRevenue(reservations);
-        stats.setTotalRevenue(totalRevenue);
+        BigDecimal roomRevenue = calculateTotalRevenue(reservations);
+        BigDecimal amenityRevenue = calculateAmenityRevenue(startDate, endDate);
+        stats.setTotalRevenue(roomRevenue.add(amenityRevenue));
 
         // Calculate average stay duration
         BigDecimal avgDuration = calculateAverageStayDuration(reservations);
@@ -105,7 +106,15 @@ public class StatisticsService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, RoundingMode.HALF_UP);
     }
+    private BigDecimal calculateAmenityRevenue(LocalDate startDate, LocalDate endDate) {
+        List<Object[]> amenities = amenityRepository.findPopularAmenities(startDate, endDate);
 
+        return amenities.stream()
+                .map(r -> (BigDecimal) r[2]) // revenue
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
 
     private BigDecimal calculateAverageStayDuration(List<Object[]> reservations) {
         if (reservations.isEmpty()) {
