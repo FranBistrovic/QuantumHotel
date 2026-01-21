@@ -13,7 +13,7 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: "ADMIN" | "STAFF" | "GUEST";
+  role: "ADMIN" | "STAFF" | "USER";
   enabled: boolean;
   gender: "MALE" | "FEMALE" | "OTHER";
   city?: string;
@@ -79,13 +79,21 @@ export default function UsersPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ...formData,
-            password: "Test1234",
+            password: Array.from(crypto.getRandomValues(new Uint32Array(32)), x => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?"[x % 90]).join(""),
             provider: "LOCAL",
+            emailVerified: true,
             enabled: formData.enabled ?? true,
             accountNonLocked: formData.enabled ?? true,
           }),
         });
         if (!res.ok) throw new Error("Neuspješno kreiranje korisnika");
+
+        const response = await fetch(`/api/auth/request-reset?email=${encodeURIComponent(formData.email!)}`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if(!response.ok) throw new Error("Neuspješno slanje emaila za reset lozinke novom korisniku.");
+
       } else {
         const originalUser = users.find((u) => u.id === formData.id);
         const { role, ...basicData } = formData;
@@ -262,7 +270,7 @@ export default function UsersPage() {
           onClick={() =>
             setFormData({
               id: 0,
-              role: "GUEST",
+              role: "USER",
               enabled: true,
               gender: "FEMALE",
               city: "",

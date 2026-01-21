@@ -399,7 +399,7 @@ const createReservation = async () => {
         const msPerDay = 1000 * 60 * 60 * 24;
         const nights = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / msPerDay));
         const amenitiesTotal = row.amenities?.reduce((sum, a) => sum + a.price * a.quantity, 0) || 0;
-        const total = (row.categoryPrice + amenitiesTotal) * nights;
+        const total = (row.categoryPrice) * nights + amenitiesTotal;
         return <span className="text-emerald-400 font-bold">{total.toFixed(2)} €</span>;
       },
     },
