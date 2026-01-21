@@ -29,13 +29,27 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query("""
     SELECT r FROM Reservation r
     WHERE r.unit.id = :unitId
-      AND r.status = 'CONFIRMED'
+      AND (r.status = 'CONFIRMED')
       AND NOT (r.dateTo <= :from OR r.dateFrom >= :to)
 """)
     List<Reservation> findConfirmedOverlaps(
             @Param("unitId") Long unitId,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to
+    );
+
+    @Query("""
+    SELECT r FROM Reservation r
+    WHERE r.unit.id = :unitId
+      AND (r.status = 'CONFIRMED' OR r.status='PENDING')
+      AND r.id <> :reservationId
+      AND NOT (r.dateTo <= :from OR r.dateFrom >= :to)
+""")
+    List<Reservation> findConfirmedOverlapsExcludingSelf(
+            @Param("unitId") Long unitId,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to,
+            @Param("reservationId") Long reservationId
     );
 
 }

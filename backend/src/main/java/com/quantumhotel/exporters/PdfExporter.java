@@ -3,6 +3,7 @@ package com.quantumhotel.exporters;
 import com.itextpdf.text.*;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -22,10 +23,24 @@ import java.util.Map;
 @Component
 public class PdfExporter {
     private static final DecimalFormat MONEY_FORMAT = new DecimalFormat("#,##0.00");
-    private static final Font TITLE_FONT = new Font(Font.FontFamily.COURIER, 18, Font.BOLD, BaseColor.DARK_GRAY);
-    private static final Font HEADER_FONT = new Font(Font.FontFamily.COURIER, 14, Font.BOLD, BaseColor.BLACK);
-    private static final Font NORMAL_FONT = new Font(Font.FontFamily.COURIER, 10, Font.NORMAL, BaseColor.BLACK);
-    private static final Font BOLD_FONT = new Font(Font.FontFamily.COURIER, 10, Font.BOLD, BaseColor.BLACK);
+
+    private Font TITLE_FONT;
+    private Font HEADER_FONT;
+    private Font NORMAL_FONT;
+    private Font BOLD_FONT;
+
+    public PdfExporter() throws Exception {
+        BaseFont baseFont = BaseFont.createFont(
+                "fonts/DejaVuSans.ttf",
+                BaseFont.IDENTITY_H,
+                BaseFont.EMBEDDED
+        );
+
+        TITLE_FONT = new Font(baseFont, 18, Font.BOLD, BaseColor.DARK_GRAY);
+        HEADER_FONT = new Font(baseFont, 14, Font.BOLD, BaseColor.BLACK);
+        NORMAL_FONT = new Font(baseFont, 10, Font.NORMAL, BaseColor.BLACK);
+        BOLD_FONT = new Font(baseFont, 10, Font.BOLD, BaseColor.BLACK);
+    }
 
     public byte[] export(HotelStatisticsDTO statistics) throws Exception {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

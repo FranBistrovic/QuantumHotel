@@ -147,10 +147,11 @@ public class ReservationService {
             }
         }
         List<Reservation> conflicts =
-                reservationRepository.findConfirmedOverlaps(
+                reservationRepository.findConfirmedOverlapsExcludingSelf(
                         r.getUnit().getId(),
                         r.getDateFrom(),
-                        r.getDateTo()
+                        r.getDateTo(),
+                        r.getId()
                 );
 
         if (!conflicts.isEmpty()) {
@@ -229,10 +230,11 @@ public class ReservationService {
 
 
         List<Reservation> conflicts =
-                reservationRepository.findConfirmedOverlaps(
+                reservationRepository.findConfirmedOverlapsExcludingSelf(
                         r.getUnit().getId(),
                         r.getDateFrom(),
-                        r.getDateTo()
+                        r.getDateTo(),
+                        r.getId()
                 );
 
         if (!conflicts.isEmpty()) {
