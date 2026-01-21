@@ -495,7 +495,7 @@ const createReservation = async () => {
           }`}
           onClick={() => setSelectedRoom(room)}
         >
-          <h4 className="font-semibold text-black">Soba {room.roomNumber}</h4>
+          <h4 className="font-semibold text-black">Soba {room.roomNumber} - {room.name}</h4>
           <p className="text-gray-800 mt-1">{room.capacity} osoba</p>
           <p className="text-gray-800 mt-1">{room.price} €</p>
 
