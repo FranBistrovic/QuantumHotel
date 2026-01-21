@@ -34,43 +34,6 @@ public class UserService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public NewUserDto createStaffUser(String username, String firstName, String lastName) {
-        if (userRepository.findByUsername(username).isPresent())
-            throw new RuntimeException("Username already exists: " + username);
-
-        String rawPassword = generateRandomPassword();
-        String encoded = passwordEncoder.encode(rawPassword);
-
-        User staff = new User();
-        staff.setUsername(username);
-        staff.setFirstName(firstName);
-        staff.setLastName(lastName);
-        staff.setPasswordHash(encoded);
-        staff.setRole(Role.STAFF);
-        staff.setRequirePasswordChange(true);
-
-        userRepository.save(staff);
-
-        return NewUserDto.from(staff, rawPassword);
-    }
-
-    public NewUserDto resetPassword(Long userId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty())
-            throw new RuntimeException("User not found");
-
-        User user = userOpt.get();
-        if (user.getRole() != Role.STAFF)
-            throw new RuntimeException("Only STAFF accounts can be reset");
-
-        String newPassword = generateRandomPassword();
-        user.setPasswordHash(passwordEncoder.encode(newPassword));
-        user.setRequirePasswordChange(true);
-        userRepository.save(user);
-
-        return NewUserDto.from(user, newPassword);
-    }
-
     public UserDto updateMe(User user, UpdateMeRequest body) {
         // PATCH semantics: only apply non-null fields
         if (body.email != null) user.setEmail(body.email);
@@ -107,7 +70,7 @@ public class UserService {
         User u = new User();
 
         // Required-ish: role column is NOT NULL
-        u.setRole(body.role != null ? body.role : Role.GUEST);
+        u.setRole(body.role != null ? body.role : Role.USER);
 
         // Basic identity fields
         u.setEmail(body.email);
@@ -210,10 +173,6 @@ public class UserService {
     private User findUserOrThrow(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + id));
-    }
-
-    private String generateRandomPassword() {
-        return UUID.randomUUID().toString().substring(0, 8);
     }
 
     // For PATCH /api/users/me
