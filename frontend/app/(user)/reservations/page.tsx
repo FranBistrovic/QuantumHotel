@@ -241,21 +241,53 @@ export default function ReservationsPage() {
   });
 };
 
+const createReservation = async () => {
+  if (!selectedRoom || !dateFrom || !dateTo) {
+    setMessage("⚠️ Molimo odaberite sobu i datume.");
+    return;
+  }
 
+  try {
 
-  const createReservation = async () => {
-    if (!selectedRoom || !dateFrom || !dateTo) return;
+    const payload = {
+      dateFrom,
+      dateTo,
+      categoryId: selectedRoom.id,
+      amenities: selectedAddons
+        .filter(a => a.quantity > 0)
+        .map(a => ({
+          amenityId: a.amn_id,
+          quantity: a.quantity,
+        })),
+    };
+
     const res = await fetch("/api/reservations", {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        dateFrom,
-        dateTo,
-        categoryId: selectedRoom.id,
-        amenities: selectedAddons,
-      }),
+      body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error("Greška pri rezervaciji");
+
+    if (!res.ok) {
+      let errorMessage = `Greška pri rezervaciji (status ${res.status})`;
+
+      try {
+        const text = await res.text();
+        if (text) {
+          try {
+            const json = JSON.parse(text);
+            errorMessage = json?.message || errorMessage;
+          } catch {
+            errorMessage = text;
+          }
+        }
+      } catch (err) {
+        console.warn("Nije uspjelo dohvatiti body iz odgovora:", err);
+      }
+
+      throw new Error(errorMessage);
+    }
+
     const created = await res.json();
     setReservations(prev => [created, ...prev]);
     setAvailableRooms([]);
@@ -264,7 +296,14 @@ export default function ReservationsPage() {
     setDateFrom("");
     setDateTo("");
     setPersons(1);
-  };
+
+    setMessage("✅ Rezervacija uspješno kreirana!");
+  } catch (err: any) {
+    console.error("Greška u createReservation:", err);
+    setMessage(`⚠️ ${err.message}`);
+  }
+};
+
 
   const handleSave = async () => {
     if (!formData) return;
@@ -448,29 +487,33 @@ export default function ReservationsPage() {
         <div className="room-grid grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
           {availableRooms.map(room => (
             <div
-              key={room.id}
-              className={`room-card p-4 border rounded cursor-pointer ${selectedRoom?.id === room.id
-                  ? "border-red-600 bg-gray-200 shadow-md"
-                  : "border-gray-400 hover:border-red-500 hover:bg-gray-200"
-                }`}
-              onClick={() => setSelectedRoom(room)}
-            >
-              <h4 className="font-semibold text-black">Soba {room.roomNumber}</h4>
-              <p className="text-gray-800 mt-1">{room.capacity} osoba</p>
+          key={room.id}
+          className={`room-card group p-4 border rounded cursor-pointer ${
+            selectedRoom?.id === room.id
+              ? "border-red-600 bg-gray-200 shadow-md"
+              : "border-gray-400 hover:border-red-500 hover:bg-gray-200"
+          }`}
+          onClick={() => setSelectedRoom(room)}
+        >
+          <h4 className="font-semibold text-black">Soba {room.roomNumber}</h4>
+          <p className="text-gray-800 mt-1">{room.capacity} osoba</p>
+          <p className="text-gray-800 mt-1">{room.price} €</p>
 
-              <p className="text-gray-800 mt-1">{room.price} €</p>
-              {room.imagePath ? (
-                <img
-                  src={`${process.env.NEXT_PUBLIC_API_URL}${room.imagePath}` || "/placeholder.svg"}
-                  alt={room.name}
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Bed className="h-12 w-12 text-muted-foreground/50" />
-                </div>
-              )}
-            </div>
+          <div className="relative w-full h-40 mt-2 overflow-hidden rounded-md">
+            {room.imagePath ? (
+              <img
+                src={`${process.env.NEXT_PUBLIC_API_URL}${room.imagePath}` || "/placeholder.svg"}
+                alt={room.name}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
+                <Bed className="h-12 w-12 text-muted-foreground/50" />
+              </div>
+            )}
+          </div>
+        </div>
+
           ))}
         </div>
 
@@ -563,11 +606,12 @@ export default function ReservationsPage() {
                   </label>
                   <input
                     type="date"
-                    className="input-field"
+                    className="input-field white-calendar"
                     value={formData.dateFrom || ""}
                     onChange={(e) =>
                       setFormData({ ...formData, dateFrom: e.target.value })
                     }
+        
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -576,7 +620,7 @@ export default function ReservationsPage() {
                   </label>
                   <input
                     type="date"
-                    className="input-field"
+                    className="input-field white-calendar"
                     value={formData.dateTo || ""}
                     onChange={(e) =>
                       setFormData({ ...formData, dateTo: e.target.value })
