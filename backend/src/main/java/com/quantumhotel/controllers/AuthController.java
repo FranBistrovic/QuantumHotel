@@ -41,6 +41,14 @@ public class AuthController {
             return jsonResponse(false, "Email already in use.", HttpStatus.BAD_REQUEST);
         }
 
+        if (!request.password().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{8,}$")) {
+            return jsonResponse(
+                    false,
+                    "Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character.",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
         User user = new User();
         user.setFirstName(request.firstName());
         user.setLastName(request.lastName());

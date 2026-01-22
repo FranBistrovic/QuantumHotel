@@ -9,8 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -36,20 +39,68 @@ public class SecurityConfig {
     private String domain;
 
     @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Public pages and assets
-                        .requestMatchers("/api/auth/**", "/oauth2/**", "/css/**", "/js/**", "/images/**", "/logout").permitAll()
+                        .requestMatchers("/api/auth/**", "/oauth2/**", "/css/**", "/js/**", "/images/**", "/logout", "/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/faq/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/articles/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/support/questions").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/room-categories").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/room-categories/{id}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/room-categories/available**").permitAll()
 
+                        // User reservation routes
+                        .requestMatchers(HttpMethod.GET, "/api/reservations/me").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/reservations").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/reservations/**").authenticated()
+
+                        // Location routes
+                        .requestMatchers(HttpMethod.GET, "/api/location").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/location").hasAnyRole("ADMIN")
+
+                        //Admin/staff rooms routes
+                        .requestMatchers(HttpMethod.GET, "/api/room-categories/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.GET, "/api/rooms/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/addons/**").permitAll()
+
+                        // Admin/Staff reservation routes
+                        .requestMatchers(HttpMethod.GET, "/api/admin/reservations/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/admin/reservations/*/confirm").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/admin/reservations/*/reject").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.PATCH, "/api/admin/reservations/*/update").hasAnyRole("ADMIN", "STAFF")
                         // Admin-only API
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/statistics/**").hasAnyRole("ADMIN","STAFF")
 
                         // Staff or Admin API
+
                         .requestMatchers("/api/staff/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers("/staff/**").hasAnyRole("ADMIN","STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/faq/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/faq/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/faq/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/articles/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/articles/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/articles/**").hasAnyRole("STAFF", "ADMIN")
 
+                        //reservations and rooms
+                        .requestMatchers(HttpMethod.POST, "/api/room-categories").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/room-categories/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/room-categories/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/rooms").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/rooms/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/rooms/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/addons/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/addons/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/addons/**").hasAnyRole("STAFF", "ADMIN")
                         .anyRequest().authenticated()
                 )
 
@@ -116,6 +167,10 @@ public class SecurityConfig {
                             new ObjectMapper().writeValue(response.getOutputStream(), body);
                         })
                 )
+                .sessionManagement(session -> session
+                        .maximumSessions(1)
+                        .sessionRegistry(sessionRegistry())
+                )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -143,8 +198,7 @@ public class SecurityConfig {
                             new ObjectMapper().writeValue(response.getOutputStream(), body);
                         })
                 )
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
+
         ;
 
         return http.build();
@@ -158,7 +212,7 @@ public class SecurityConfig {
             "http://localhost:3000", // local dev
             frontendOrigin           // deployed frontend
     	));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 

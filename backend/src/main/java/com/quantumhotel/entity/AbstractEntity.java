@@ -2,12 +2,14 @@ package com.quantumhotel.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
 @MappedSuperclass
+@Setter
 @Getter
 public class AbstractEntity {
     @Id
