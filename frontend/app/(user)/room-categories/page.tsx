@@ -202,7 +202,8 @@ export default function RoomCategoriesPage() {
                     <div className="space-y-3 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        <span>Kapacitet: {category.capacity} osobe</span>
+                        <span>Kapacitet: {category.capacity}{" "}{category.capacity === 1 ? "osoba" : "osobe"}</span>
+
                       </div>
                       <div className="flex items-center gap-2">
                         <Bed className="h-4 w-4" />

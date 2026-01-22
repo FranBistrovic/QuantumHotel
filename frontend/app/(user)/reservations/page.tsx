@@ -88,30 +88,7 @@ export default function ReservationsPage() {
 
   const [loading, setLoading] = useState(true);
 
-  // Fetch reservations
-  {/*}
-  useEffect(() => {
-    let isMounted = true;
-    const fetchReservations = async () => {
-      try {
-        const res = await fetch("/api/reservations/me", { credentials: "include" });
-        if (!res.ok) {
-          router.replace("/login");
-          return;
-        }
-        const data: Reservation[] = await res.json();
-        if (isMounted) setReservations(data);
-      } catch (err) {
-        console.error(err);
-        router.replace("/login");
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-    fetchReservations();
-    return () => { isMounted = false; };
-  }, [router]);
-  */}
+
 
   useEffect(() => {
     let isMounted = true;
@@ -174,53 +151,59 @@ export default function ReservationsPage() {
 
   if (loading) return <div>Učitavanje...</div>;
 
-  {/*}
-  const fetchAvailableRooms = async () => {
-    if (!dateFrom || !dateTo) return;
-    const res = await fetch(
-      `/api/room-categories/available?from=${dateFrom}&to=${dateTo}&persons=${persons}`
-    );
-    setAvailableRooms(await res.json());
-  };
-  */}
 
   const fetchAvailableRooms = async () => {
-    if (!dateFrom || !dateTo) {
-      setMessage("⚠️ Molimo odaberite datume za rezervaciju.");
+  if (!dateFrom || !dateTo) {
+    setMessage("⚠️ Molimo odaberite datume za rezervaciju.");
+    return;
+  }
+
+  setLoading(true);
+  setMessage("");
+
+  try {
+    const res = await fetch(
+      `/api/room-categories/available?from=${dateFrom}&to=${dateTo}&persons=${persons}`,
+      { credentials: "include" }
+    );
+
+    if (!res.ok) {
+  
+      let errorMsg = `Greška pri dohvaćanju dostupnih soba (status ${res.status})`;
+
+      try {
+        const text = await res.text();
+        if (text) {
+          try {
+            const json = JSON.parse(text);
+            errorMsg = json?.detail || json?.message || text;
+          } catch {
+            errorMsg = text; 
+          }
+        }
+      } catch (err) {
+        console.warn("Nije uspjelo dohvatiti body iz odgovora:", err);
+      }
+
+      setMessage(`⚠️ ${errorMsg}`);
+      setAvailableRooms([]);
       return;
     }
 
-    setLoading(true);
-    setMessage(""); // resetiraj prethodne poruke
+    const data: Room[] = await res.json();
+    setAvailableRooms(Array.isArray(data) ? data : []);
 
-    try {
-      const res = await fetch(
-        `/api/room-categories/available?from=${dateFrom}&to=${dateTo}&persons=${persons}`,
-        { credentials: "include" }
-      );
+    if (data.length === 0) setMessage("⚠️ Nema dostupnih soba za odabrane datume.");
+  } catch (err) {
+    console.error(err);
+    setMessage("⚠️ Veza sa serverom nije uspjela. Pokušajte ponovo.");
+    setAvailableRooms([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
-      if (!res.ok) {
-        // pokušaj dohvatiti detalje greške iz odgovora
-        const errorData = await res.json().catch(() => null);
-        const errorMsg =
-          errorData?.message ||
-          `Greška pri dohvaćanju dostupnih soba (status ${res.status})`;
-        setMessage(`⚠️ ${errorMsg}`);
-        setAvailableRooms([]);
-        return;
-      }
-
-      const data: Room[] = await res.json();
-      setAvailableRooms(Array.isArray(data) ? data : []);
-      if (data.length === 0) setMessage("⚠️ Nema dostupnih soba za odabrane datume.");
-    } catch (err: unknown) {
-      console.error(err);
-      setMessage("⚠️ Veza sa serverom nije uspjela. Pokušajte ponovo.");
-      setAvailableRooms([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
 
   const updateAddon = (amnId: number, quantity: number) => {
@@ -382,7 +365,7 @@ const createReservation = async () => {
           className={`px-2 py-1 rounded-full text-sm ${value === "PENDING"
               ? "bg-gray-300 text-gray-900"
               : value === "CONFIRMED"
-                ? "bg-gray-200 text-gray-900 border border-gray-400"
+                ? "bg-green-200 text-green-900 border border-green-400"
                 : "bg-red-100 text-red-800 border border-red-300"
             }`}
         >

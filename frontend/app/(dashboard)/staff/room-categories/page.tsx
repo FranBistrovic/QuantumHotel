@@ -228,7 +228,7 @@ export default function RoomCategoriesPage() {
       key: "capacity",
       label: "Kapacitet",
       sortable: true,
-      render: (v) => `${v} osobe`,
+      render: (v) => `${v} ${v === 1 ? "osoba" : "osobe"}`,
     },
     {
       key: "price",
