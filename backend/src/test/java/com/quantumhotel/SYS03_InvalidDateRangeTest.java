@@ -34,7 +34,7 @@ public class SYS03_InvalidDateRangeTest extends BaseE2ETest {
 
         click(By.cssSelector("#dostupneSobeBtn"));
 
-        boolean hasError = !driver.findElements(By.cssSelector("#resultMessage")).contains("Datum odlaska mora biti nakon datuma");
+        boolean hasError = !driver.findElements(By.cssSelector("#resultMessage")).contains("Datum odlaska mora biti nakon datuma dolaska.");
         assertTrue(hasError, "Očekivana greška rezervacije.");
     }
 }
