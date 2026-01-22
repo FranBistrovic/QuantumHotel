@@ -229,7 +229,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <button className="sidebar-link" onClick={handleDeleteAccount} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "8px", color: "rgba(255,255,255,0.7)", marginBottom: "4px", background: "transparent", border: "none", cursor: "pointer" }}>
                   <Trash2 size={18} /> Obriši račun
                 </button>
-                <button className="sidebar-link" onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "8px", color: "#e11d48", marginBottom: "4px", background: "transparent", border: "none", cursor: "pointer" }}>
+                <button id="logoutBtn" className="sidebar-link" onClick={handleLogout} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "8px", color: "#e11d48", marginBottom: "4px", background: "transparent", border: "none", cursor: "pointer" }}>
                   <LogOut size={18} /> Odjava
                 </button>
               </>

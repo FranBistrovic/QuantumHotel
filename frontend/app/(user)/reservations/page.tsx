@@ -460,6 +460,7 @@ const createReservation = async () => {
         </div>
 
         <button
+          id="dostupneSobeBtn"
           className="btn-primary mt-4 w-full sm:w-auto bg-red-600 text-white font-medium py-2 px-4 rounded-md shadow hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={fetchAvailableRooms}
         >
@@ -470,6 +471,7 @@ const createReservation = async () => {
         <div className="room-grid grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
           {availableRooms.map(room => (
             <div
+          id={"room-" + room.id.toString()}
           key={room.id}
           className={`room-card group p-4 border rounded cursor-pointer ${
             selectedRoom?.id === room.id
@@ -509,6 +511,7 @@ const createReservation = async () => {
             return (
               <div
                 key={addon.id}
+                id={"addon-" + addon.id.toString()}
                 className="amenity-row flex items-center justify-between p-2 border border-gray-400 rounded bg-gray-100 max-w-sm"
               >
                 <span className="text-gray-800">{addon.name}</span>
@@ -547,6 +550,7 @@ const createReservation = async () => {
         </div>
 
         <button
+          id="rezervirajBtn"
           className="btn-primary mt-4 w-full sm:w-auto bg-red-600 text-white font-medium py-2 px-4 rounded-md shadow hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={!selectedRoom}
           onClick={createReservation}
@@ -555,7 +559,7 @@ const createReservation = async () => {
         </button>
       </section>
 
-      {message && <p className="text-red-500 mt-4">{message}</p>}
+      {message && <p id="resultMessage" className="text-red-500 mt-4">{message}</p>}
 
       {/* MY RESERVATIONS */}
       <section className="my-reservations space-y-4">
