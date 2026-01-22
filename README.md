@@ -25,7 +25,17 @@ Na stranici je integrirana Google Maps usluga koja omogućuje precizan prikaz lo
 Svi podaci o korisnicima, rezervacijama i uslugama pohranjeni su u centraliziranu bazu podataka. Sustav je u potpunosti operativan, siguran i dizajniran za stalnu dostupnost.
 
 # Tehnologije
-#Instalacija
+- **Dokumentacija:** GitHub Wiki, Astah UML, draw.io, PlantUML, dbdiagram.io
+- **Frontend:** React (Next.js), JavaScript, HTML/CSS
+- **Backend:** Java, Spring Boot
+- **Baza:** PostgreSQL (modeliranje: ERDplus)
+- **Infrastruktura/Deploy:** Docker + docker-compose, Nginx (reverse proxy), AWS EC2
+- **Integracije:** Google Maps
+- **Razvojni alati:** IntelliJ IDEA
+- **Testiranje:** Spring Boot Test, Mockito, Selenium
+- **Version control:** Git, GitHub
+- **Komunikacija/alat:** WhatsApp, Discord
+- **AI alati:** ChatGPT, Gemini, Claude
 
 # Članovi tima
 [Fran Bistrović](https://github.com/FranBistrovic)  
