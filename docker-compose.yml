@@ -29,6 +29,8 @@ services:
       SPRING_PROFILES_ACTIVE: docker
     ports:
       - "8080:8080"
+    volumes:
+      - uploads:/app/uploads
     networks:
       - quantum-net
   frontend:
@@ -48,6 +50,7 @@ services:
 
 volumes:
   pgdata:
+  uploads:
 
 networks:
   quantum-net:
