@@ -8,8 +8,13 @@ interface Location {
   longitude: number;
 }
 
+const DEFAULT_LOCATION: Location = {
+  latitude: 45.815399,
+  longitude: 15.966568,
+};
+
 export default function HomePage() {
-  const [location, setLocation] = useState<Location | null>(null);
+  const [location, setLocation] = useState<Location>(DEFAULT_LOCATION);
   const [user, setUser] = useState<any>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [city, setCity] = useState("");
@@ -152,32 +157,39 @@ export default function HomePage() {
       {/* Galerija */}
       <section className="gallery-section">
         <h3 className="text-2xl font-semibold mb-4 text-[#800020]">Galerija</h3>
-        <div className="gallery-container flex gap-6">
-          <div className="gallery-large relative w-1/2 h-[400px] rounded-2xl overflow-hidden shadow-lg">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="relative h-[400px] md:h-[500px] flex items-center justify-center">
             <Image
               src="/bordo izvana hotel.png"
               alt="Hotel izvana"
-              fill
-              className="object-cover hover:scale-105 transition-transform"
+              width={1024}
+              height={1536}
+              className="h-full w-auto rounded-2xl shadow-lg object-contain hover:scale-105 transition-transform duration-300"
             />
           </div>
-          <div className="gallery-small-container flex flex-col gap-6 w-1/2">
-            <div className="gallery-small relative w-full h-[290px] rounded-2xl overflow-hidden shadow-lg">
-              <Image
-                src="/bordo soba.png"
-                alt="Soba"
-                fill
-                className="object-cover hover:scale-105 transition-transform"
-              />
-            </div>
-            <div className="gallery-small relative w-full h-[290px] rounded-2xl overflow-hidden shadow-lg">
-              <Image
-                src="/bazeni.png"
-                alt="Bazen"
-                fill
-                className="object-cover hover:scale-105 transition-transform"
-              />
-            </div>
+          <div className="relative h-[400px] md:h-[500px] rounded-2xl overflow-hidden shadow-lg md:col-span-2">
+            <Image
+              src="/suselj_brijeg.png"
+              alt="Šušelj brijeg"
+              fill
+              className="object-cover hover:scale-105 transition-transform duration-300"
+            />
+          </div>
+          <div className="relative h-[250px] rounded-2xl overflow-hidden shadow-lg md:col-span-2">
+            <Image
+              src="/bazeni.png"
+              alt="Bazen"
+              fill
+              className="object-cover hover:scale-105 transition-transform duration-300"
+            />
+          </div>
+          <div className="relative h-[250px] rounded-2xl overflow-hidden shadow-lg">
+            <Image
+              src="/bordo soba.png"
+              alt="Soba"
+              fill
+              className="object-cover hover:scale-105 transition-transform duration-300"
+            />
           </div>
         </div>
       </section>

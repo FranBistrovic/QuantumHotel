@@ -193,7 +193,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               const Icon = item.icon;
               const isActive = pathname === item.href;
               return (
-                <Link key={item.name} href={item.href} onClick={() => setSidebarOpen(false)} className={`sidebar-link ${isActive ? "active" : ""}`} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "8px", transition: "all 0.2s ease", marginBottom: "4px", backgroundColor: isActive ? "rgba(225, 29, 72, 0.15)" : "transparent", color: isActive ? "#fff" : "rgba(255, 255, 255, 0.7)", borderLeft: isActive ? "3px solid #e11d48" : "3px solid transparent", textDecoration: "none" }}>
+                <Link key={item.name} href={item.href} onClick={() => setSidebarOpen(false)} className={`sidebar-link ${isActive ? "active" : ""}`} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "8px", transition: "all 0.2s ease", marginBottom: "4px", color: isActive ? "#fff" : "rgba(255, 255, 255, 0.7)", borderLeft: isActive ? "3px solid #e11d48" : "3px solid transparent", textDecoration: "none" }}>
                   <Icon size={18} strokeWidth={isActive ? 2.5 : 2} style={{ color: isActive ? "#e11d48" : "inherit" }} />
                   <span style={{ fontSize: "0.9rem", fontWeight: isActive ? 600 : 400 }}>{item.name}</span>
                 </Link>
