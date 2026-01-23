@@ -129,9 +129,7 @@ export default function RoomCategoryPage() {
                   {category.price} € / noć
                 </Badge>
               </div>
-              <p className="text-muted-foreground">
-                {category.unitsNumber} {category.unitsNumber === 1 ? "jedinica dostupna" : "jedinice dostupne"}
-              </p>
+              
             </div>
 
             {/* Info Cards */}
@@ -158,18 +156,6 @@ export default function RoomCategoryPage() {
                     <p className="font-semibold">
                       {category.twinBeds ? "Odvojeni (Twin)" : "Bračni"}
                     </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-muted/50">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Home className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Broj jedinica</p>
-                    <p className="font-semibold">{category.unitsNumber}</p>
                   </div>
                 </CardContent>
               </Card>
