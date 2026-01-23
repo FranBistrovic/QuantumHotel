@@ -45,6 +45,7 @@ export default function RoomCategoriesPage() {
   /* ---------- GET /api/room-categories ---------- */
   const searchParams = useSearchParams();
 
+  
   useEffect(() => {
     const fetchCategories = async () => {
       setLoading(true);
@@ -74,6 +75,7 @@ export default function RoomCategoriesPage() {
 
     fetchCategories();
   }, []);
+
 
   const filteredData = categories.filter((c) =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -220,12 +222,7 @@ export default function RoomCategoriesPage() {
                       </div>
                     </div>
 
-                    {/* Units Available */}
-                    <div className="mt-4 pt-4 border-t">
-                      <Badge variant="secondary">
-                        {category.unitsNumber} {category.unitsNumber === 1 ? "jedinica dostupna" : "jedinice dostupne"}
-                      </Badge>
-                    </div>
+                    
                   </CardContent>
                 </Card>
               </Link>
