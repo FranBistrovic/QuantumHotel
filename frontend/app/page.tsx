@@ -169,7 +169,7 @@ export default function HomePage() {
           <div className="gallery-small-container flex flex-col gap-6 w-1/2">
             <div className="gallery-small relative w-full h-[290px] rounded-2xl overflow-hidden shadow-lg">
               <Image
-                src="/bordo soba.png"
+                src="/regular_room.png"
                 alt="Soba"
                 fill
                 className="object-cover hover:scale-105 transition-transform"
